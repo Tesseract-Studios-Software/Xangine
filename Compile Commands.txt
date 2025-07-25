@@ -1,0 +1,3 @@
+XGN Current Version: clang++ [CPP_NAME] -o [EXE_NAME] -lxgn -lxgn3D -l-losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib
+XGN Future Version: clang++ [CPP_NAME] -o [EXE_NAME] -lxgn -lxgn3D -lxgnUI -l-losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib
+OSG: clang++ [CPP_NAME] -o [EXE_NAME] -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib
