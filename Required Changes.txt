@@ -1,0 +1,4 @@
+3D_renderer.hpp - Implement the necessary functions to handle 3D rendering.
+renderer.hpp - Continue writing the render_frame() function using functions of 3D_renderer.hpp.
+render_adapter.hpp - Write the necessary adpater functions to connect renderer.hpp with core.hpp.
+core.hpp - Add frame() function to handle the main rendering loop.

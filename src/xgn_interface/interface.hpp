@@ -8,9 +8,7 @@
 namespace xgn {
 // Interfaces contain 3D scenes.
 struct interface {
-    xgn3D::scene scenes[1024]; // Each interface can hold up to 1024 scenes.
-    bool is_new = true;
-    int data_count = 0;
+    vector<xgn3D::scene> scenes;
     int coordinates_on_screen_x = 0; // X-axis location of the left bottom corner of the interface.
     int coordinates_on_screen_y = 0; // Y-axis location of the left bottom corner of the interface.
     int size_x = 100; // X-axis length of the interface.

@@ -6,11 +6,9 @@
 
 namespace xgn3D {
 
-// Groups contain 3D objects, each group can hold up to 1048576 objects.
+// Groups contain 3D objects.
 struct group {
-    xgn3D::object objects[1048576];
-    bool is_new = true;
-    int data_count = 0;
+    vector<xgn3D::object> objects;
 };
 
 };

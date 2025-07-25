@@ -6,11 +6,9 @@
 
 namespace xgn3D {
 
-// Scenes contain groups, each scene can hold up to 1024 groups.
+// Scenes contain groups.
 struct scene {
-    xgn3D::group groups[1024];
-    bool is_new = true;
-    int data_count = 0;
+    vector<xgn3D::group> groups;
 };
 
 };

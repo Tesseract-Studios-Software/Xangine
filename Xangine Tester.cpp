@@ -20,7 +20,31 @@ int main() {
     log("98", 5);
     log("96", 1);
     log("99", 1, "The tester will now create an instance of Xangine to test all features.");
-    // Create window.
+    
+    object obj;
+
+    group obj_group;
+    obj_group.objects.push_back(obj);
+
+    scene obj_scene;
+    obj_scene.groups.push_back(obj_group);
+
+    interface obj_interface;
+    obj_interface.scenes.push_back(obj_scene);
+    obj_interface.coordinates_on_screen_x = 0;
+    obj_interface.coordinates_on_screen_y = 0;
+    obj_interface.interface_type = "3D";
+    obj_interface.size_x = 800;
+    obj_interface.size_y = 450;
+
+    window default_window;
+    default_window.name = "Xangine Test";
+    default_window.is_main = true;
+    default_window.size_x = 800;
+    default_window.size_y = 450;
+    default_window.interfaces.push_back(obj_interface);
+
+    xgn::init(default_window);
 
     log("96", 1);
     log("3", 2);

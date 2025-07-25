@@ -20,9 +20,9 @@ inline xgn3D::object load_data(xgn3D::object& load) {
 vector<xgn3D::object> load_all_data(interface& load_interface) {
     int k, l, m, o;
     vector<xgn3D::object> obj_vector;
-    for (k = 0; k < load_interface.data_count; k++) {
-        for (l = 0; l < load_interface.scenes[k].data_count; l++) {
-            for (m = 0; m < load_interface.scenes[k].groups[l].data_count; m++) {
+    for (k = 0; k < load_interface.scenes.size(); k++) {
+        for (l = 0; l < load_interface.scenes[k].groups.size(); l++) {
+            for (m = 0; m < load_interface.scenes[k].groups[l].objects.size(); m++) {
                 obj_vector.push_back(load_data(load_interface.scenes[k].groups[l].objects[m]));
             }
         }

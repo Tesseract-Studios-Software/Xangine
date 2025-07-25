@@ -8,8 +8,6 @@
 // Containers contain windows.
 struct container {
     vector<xgn::window> windows;
-    bool is_new = true;
-    int data_count = 0;
 };
 
 #endif // CONTAINER_HPP

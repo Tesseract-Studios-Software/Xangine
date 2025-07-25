@@ -10,7 +10,7 @@ namespace xgn {
 int render_frame(window& loading_window) {
     int i, j, k = 0;
 
-    for (i = 0; i < loading_window.data_count; i++) {
+    for (i = 0; i < loading_window.interfaces.size(); i++) {
         if (loading_window.interfaces[i].interface_type == "3D") {
             // Load all 3D objects
             for (j = 0; j < loading_window.interfaces[i].objects_loaded.size(); j++) {
