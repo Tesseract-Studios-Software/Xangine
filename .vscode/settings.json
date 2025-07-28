@@ -216,7 +216,10 @@
         "registry": "cpp",
         "serializer": "cpp",
         "sharedstatemanager": "cpp",
-        "streamoperator": "cpp"
+        "streamoperator": "cpp",
+        "graphicswindow": "cpp",
+        "renderstage": "cpp",
+        "sceneview": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabledIfIncludesResolve"
 }

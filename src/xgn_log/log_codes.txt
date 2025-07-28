@@ -10,3 +10,4 @@
 100 Could not open log code list file.
 101 File not found.
 102 This log is a placeholder.
+103 Unknown interface type.

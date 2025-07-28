@@ -3,7 +3,6 @@
 
 #include "../xgn_interface/interface.hpp"
 #include "../xgn_log/log.hpp"
-#include "../xgn_renderer/3D_renderer.hpp"
 #include <vector>
 
 namespace xgn {
