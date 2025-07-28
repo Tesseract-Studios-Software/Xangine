@@ -11,3 +11,4 @@
 101 File not found.
 102 This log is a placeholder.
 103 Unknown interface type.
+104 File is not a Wavefront .obj file.

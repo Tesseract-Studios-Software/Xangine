@@ -12,8 +12,11 @@ namespace xgn3D {
 // Each object has 3D coordinates, a mesh, and a material.
 struct object {
     double coordinates[3] = {0, 0, 0};
+    double rotation[3] = {0, 0, 0};
     xgn3D::mesh obj_mesh;
     xgn3D::material obj_material;
+
+    osg::ref_ptr<osg::PositionAttitudeTransform> transform = nullptr;
 };
 
 };

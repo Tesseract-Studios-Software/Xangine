@@ -36,6 +36,13 @@ int main() {
     obj_interface.interface_type = "3D";
     obj_interface.size_x = 800;
     obj_interface.size_y = 450;
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 5;  // X
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = -5; // Y (negative = toward viewer)
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 3;  // Z (height)
+    // Simplified rotation (just yaw and pitch):
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = -20; // Slight downward pitch
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;  // Facing forward
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 0;  // No roll
 
     window default_window;
     default_window.name = "Xangine Test";
@@ -44,7 +51,11 @@ int main() {
     default_window.size_y = 450;
     default_window.interfaces.push_back(obj_interface);
 
-    xgn::init(default_window);
+    default_window = xgn::init(default_window);
+    
+    while (!default_window.done) {
+        xgn::frame(default_window);
+    }
 
     log("96", 1);
     log("3", 2);

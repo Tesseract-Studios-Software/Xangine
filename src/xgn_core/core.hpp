@@ -65,18 +65,25 @@ xgn3D::object load_object(object& loading_object) {
     return load_data(loading_object);
 }
 
-// Spawn new window.
-int new_window(window& window_new) {
-    log("102", 1);
-}
+// // Spawn new window.
+// int new_window(window& window_new) {
+//     log("102", 1);
+// }
 
 // Initialise Xangine instance.
-int init(window& default_window) {
-    osgViewer::Viewer viewer = setup_osg();
-    osg::ref_ptr<osg::Group> root = setup_root();
-    // Create window.
-    new_window(default_window);
-    set_executable_dir(); // Set the working directory to the executable directory.
+window init(window& default_window) {
+    // Return the configured viewer and root
+    auto [viewer, root] = setup_osg(default_window); 
+    
+    // Store in window struct
+    default_window.viewer = viewer;
+    default_window.root = root;
+    root->addChild(create_axes());
+    return default_window;
+}
+
+int frame(window window) {
+    return render_frame(window);
 }
 
 };

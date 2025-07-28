@@ -1,1 +1,1 @@
-OSG: clang++ [CPP_NAME] -o [EXE_NAME] -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib
+clang++ -std=c++17 -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib -o [OUT_NAME] [IN_NAME]

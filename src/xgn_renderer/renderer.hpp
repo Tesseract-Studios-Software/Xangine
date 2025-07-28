@@ -8,24 +8,16 @@
 namespace xgn {
 
 // Render the next frame.
-int render_frame(window loading_window, osg::ref_ptr<osg::Group> root, osgViewer::Viewer viewer) {
-    int i, j, k, l;
-    xgn3D::object current_object;
-    for (i = 0; i < loading_window.interfaces.size(); i++) {
-        if (loading_window.interfaces[i].interface_type == "3D") {
-            // Load all 3D objects
-            for (j = 0; j < loading_window.interfaces[i].scenes[loading_window.interfaces[i].scene_in_use].objects_loaded.size(); j++) {
-                current_object = loading_window.interfaces[i].scenes[loading_window.interfaces[i].scene_in_use].objects_loaded[j];
-                
-            }
-        }
-        else if (loading_window.interfaces[i].interface_type == "UI") {
-            // Write in future updates.
-        }
-        else {
-            log("103", 4, "(" + loading_window.interfaces[i].interface_type + ")");
-        }
+int render_frame(window& loading_window) {
+    // Update all objects first
+    update_objects(loading_window);
+    
+    // Then render
+    loading_window.done = loading_window.viewer->done();
+    if (!loading_window.done) {
+        loading_window.viewer->frame();
     }
+    return 0;
 }
 
 };
