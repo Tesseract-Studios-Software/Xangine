@@ -3,12 +3,12 @@
 
 #include "../xgn3D_object/object.hpp"
 #include "./3D_data_loader.hpp"
-#include "./3D_obj_file_loader.hpp"
 #include "./osg_adapter.hpp"
 #include "../xgn_renderer/renderer.hpp"
 #include <vector>
 #include <libgen.h>
 #include <unistd.h>
+#include <time.h>
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
@@ -20,14 +20,16 @@ namespace xgn {
 
 // Outputs the corresponding string of the number.
 void code(const int& the_number) {
-    if (the_number == 3) {
-        log("3", 5);
-    } else if (the_number == 2) {
-        log("2", 5);
+    if (the_number == 0) {
+        log("0xffff", 5);
     } else if (the_number == 1) {
-        log("1", 5);
-    } else if (the_number == 0) {
-        log("0", 5);
+        log("0xfffe", 5);
+    } else if (the_number == 2) {
+        log("0xfffd", 5);
+    } else if (the_number == 3) {
+        log("0xfffc", 5);
+    } else if (the_number == 13) {
+        log("0x000d", 5);
     }
 }
 
@@ -65,25 +67,39 @@ xgn3D::object load_object(object& loading_object) {
     return load_data(loading_object);
 }
 
-// // Spawn new window.
-// int new_window(window& window_new) {
-//     log("102", 1);
-// }
-
 // Initialise Xangine instance.
 window init(window& default_window) {
-    // Return the configured viewer and root
-    auto [viewer, root] = setup_osg(default_window); 
+    auto [viewer, root] = setup_osg(default_window);
     
-    // Store in window struct
+    // Store references
     default_window.viewer = viewer;
     default_window.root = root;
-    root->addChild(create_axes());
+    
     return default_window;
 }
 
-int frame(window window) {
-    return render_frame(window);
+int check_xangine_instance(window& default_window) {
+    if (!default_window.root || !default_window.viewer) {
+        log("0xd000", 5);
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+pair<int, float> frame(window window, int fps_limit) {
+    // Use time.h to get current time
+    static clock_t last_time = clock();
+    clock_t current_time = clock();
+    double elapsed_time = double(current_time - last_time) / CLOCKS_PER_SEC;
+    if (elapsed_time < 1.0 / fps_limit) {
+        // Wait until the next frame
+        usleep((1.0 / fps_limit - elapsed_time) * 1000000);
+        current_time = clock(); // Update current time after waiting
+        elapsed_time = double(current_time - last_time) / CLOCKS_PER_SEC;
+    }
+    return {render_frame(window), 1.0 / elapsed_time};
 }
 
 };

@@ -5,23 +5,10 @@ using namespace std;
 int main() {
     int i;
     set_executable_dir(); // Set the working directory to the executable directory.
-    log("99", 1, "The tester is now about to test all error codes.");
-    log("95", 1);
-    for (i = 100; i < 103; i++) {
-        log(to_string(i), 1, "This is a test log message.");
-    }
-    log("99", 1, "The tester is now about to test all log levels.");
-    log("95", 1);
-    log("98", 0);
-    log("98", 1);
-    log("98", 2);
-    log("98", 3);
-    log("98", 4);
-    log("98", 5);
-    log("96", 1);
-    log("99", 1, "The tester will now create an instance of Xangine to test all features.");
+    log("0x1004", 1, "The tester will now create an instance of Xangine to test all features.");
     
     object obj;
+    obj.obj_mesh.obj_file = "./src/xgn3D_resources/default_cube.obj";
 
     group obj_group;
     obj_group.objects.push_back(obj);
@@ -36,11 +23,10 @@ int main() {
     obj_interface.interface_type = "3D";
     obj_interface.size_x = 800;
     obj_interface.size_y = 450;
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 5;  // X
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = -5; // Y (negative = toward viewer)
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 3;  // Z (height)
-    // Simplified rotation (just yaw and pitch):
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = -20; // Slight downward pitch
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 0;  // X
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 0; // Y 
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 10;  // Z 
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = -90; // Slight downward pitch
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;  // Facing forward
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 0;  // No roll
 
@@ -54,7 +40,7 @@ int main() {
     default_window = xgn::init(default_window);
     
     while (!default_window.done) {
-        xgn::frame(default_window);
+        xgn::frame(default_window, 60);
     }
 
     log("96", 1);

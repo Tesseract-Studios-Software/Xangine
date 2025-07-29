@@ -10,7 +10,9 @@ using namespace std;
 
 namespace xgn {
 
-map<int, string> log_codes;
+int filter = 0;
+
+map<string, string> log_codes;
 
 // DEBUG - For debugging
 // INFO - Log normal activities
@@ -23,16 +25,18 @@ map<int, string> log_codes;
 void read_log_codes(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cout << "[ERROR] Code 100: Could not open log code list file: " << filename << endl;
+        cout << "[ERROR] Code 0x9000: Cannot open log code list file: " << filename << endl;
         return;
     }
     string line;
     while (getline(file, line)) {
         size_t pos = line.find(' ');
         if (pos != string::npos) {
-            int code = stoi(line.substr(0, pos));
-            string message = line.substr(pos + 1);
-            log_codes[code] = message;
+            if (line.substr(0, pos) == "#") {} else {
+                string code = line.substr(0, pos);
+                string message = line.substr(pos + 1);
+                log_codes[code] = message;
+            }
         }
     }
     file.close();
@@ -40,29 +44,23 @@ void read_log_codes(const string& filename) {
 
 void log(const string& code, const int& level, const string& extra_info = "") {
     read_log_codes("./src/xgn_log/log_codes.txt"); // Load log codes from file
-    if (level == 0) {
+    if (level == 0 || filter <= 0) {
         cout << "[DEBUG] ";
-    } else if (level == 1) {
+    } else if (level == 1 || filter <= 1) {
         cout << "[INFO] ";
-    } else if (level == 2) {
+    } else if (level == 2 || filter <= 2) {
         cout << "[WARNING] ";
-    } else if (level == 3) {
+    } else if (level == 3 || filter <= 3) {
         cout << "[ERROR] ";
-    } else if (level == 4) {
+    } else if (level == 4 || filter <= 4) {
         cout << "[CRITICAL] ";
-    } else if (level == 5) {    
+    } else if (level == 5 || filter <= 5) {    
         cout << "[FATAL] ";
     } else {
         cout << "[UNKNOWN] ";
     }
     cout << "Code " << code << ": ";
-    // Get the log message from log_codes
-    int code_int = stoi(code);
-    if (log_codes.find(code_int) != log_codes.end()) {
-        cout << log_codes[code_int] << " ";
-    } else {
-        cout << "Unknown log code. ";
-    }
+    cout << log_codes[code] << " ";
     cout << extra_info << endl;
 }
 

@@ -1,14 +1,37 @@
-0 :(
-1 CAN'T
-2 CANNOT
-3 CAN
-95 Test will start now.
-96 Test successful.
-97 Test failed.
-98 Test.
-99 This is a test program.
-100 Could not open log code list file.
-101 File not found.
-102 This log is a placeholder.
-103 Unknown interface type.
-104 File is not a Wavefront .obj file.
+# SYSTEM 0x0000-0x0fff, 0xf000-0xffff
+0xffff :(
+0xfffe CAN'T
+0xfffd CANNOT
+0xfffc CAN
+0x000D Is Aluminium!
+
+# TEST 0x1000-0x2fff
+0x1000 Test will start now.
+0x1001 Test successful.
+0x1002 Test failed.
+0x1003 Test.
+0x1004 This is a test program.
+
+# 0 - DEBUG 0x3000-0x4fff
+0x3000 This log is a placeholder.
+0x3001 Setting up root.
+0x3002 Creating object transform
+0x3003 Loading objects into OSG.
+0x3004 Setting up camera.
+0x3005 Setting up view.
+0x3006 Setting up objects.
+
+# 1 - INFO 0x5000-0x6fff
+
+# 2 - WARNING 0x7000-0x8fff
+
+# 3 - ERROR 0x9000-0xafff
+0x9000 Could not open log code list file.
+0x9001 Unknown interface type.
+0x9002 Wavefront .obj file cannot be loaded.
+0x9003 File not found.
+
+# 4 - CRITICAL 0xb000-0xcfff
+
+# 5 - FATAL 0xd000-0xefff
+0xd000 Xangine instance failed to initialise.

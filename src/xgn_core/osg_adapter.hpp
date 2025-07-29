@@ -8,6 +8,7 @@
 #include <osg/PositionAttitudeTransform>
 #include <osg/DisplaySettings>
 #include <osgViewer/ViewerEventHandlers>
+#include <osg/Material>
 // #include <osg/Geode>
 // #include <osg/Node>
 #include "../xgn_log/log.hpp"
@@ -20,56 +21,14 @@ namespace xgn {
 
 // Setup the OSG root.
 osg::ref_ptr<osg::Group> setup_root() {
+    log("0x3001", 0);
     // Create root group
     osg::ref_ptr<osg::Group> root = new osg::Group;
     return root;
 }
 
-// Load an object into the OSG root.
-inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object load_obj, osg::ref_ptr<osg::Group> root) {
-    osg::ref_ptr<osg::Node> loadedModel = osgDB::readNodeFile(load_obj.obj_mesh.obj_file);
-    root->addChild(loadedModel);
-    return root;
-}
-
-// Setup the camera.
-inline osg::Camera* setup_camera(xgn3D::camera xgn_camera, osgViewer::Viewer viewer) {
-    osg::Camera* osg_camera = viewer.getCamera();
-    osg_camera->setProjectionMatrixAsPerspective(0, 0, 0, 1000);
-    int focal_length = xgn_camera.focal_length;
-    int clip_start = xgn_camera.clip_start;
-    int clip_end = xgn_camera.clip_end;
-    double aspect_ratio = xgn_camera.aspect_ratio;
-    double halfFov = 2.0f * atanf((1.0f / (2.0f * focal_length)) / aspect_ratio);
-    double fov = 2.0f * halfFov;
-
-    // Set the projection matrix as perspective.
-    osg_camera->setProjectionMatrixAsPerspective(fov, aspect_ratio, clip_start, clip_end);
-    return osg_camera;
-}
-
-// Support for multiple interfaces in one window will come in future updates.
-osgViewer::Viewer setup_view(osgViewer::Viewer viewer, xgn::interface interface, xgn::window window) {
-    // Set up view with proper window dimensions
-    viewer.setUpViewInWindow(100, 100, window.size_x, window.size_y);
-    
-    // Set window title
-    viewer.realize();
-    typedef osgViewer::Viewer::Windows Windows;
-    Windows windows;
-    viewer.getWindows(windows);
-    if (!windows.empty()) {
-        windows[0]->setWindowName(window.name);
-        
-        // For macOS specifically, may need to force refresh
-        #ifdef __APPLE__
-        windows[0]->requestWarpPointer(window.size_x/2, window.size_y/2);
-        #endif
-    }
-    return viewer;
-}
-
 inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(const xgn3D::object& obj) {
+    log("0x3002", 0);
     auto transform = new osg::PositionAttitudeTransform;
     
     // Set position
@@ -94,7 +53,94 @@ inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(cons
     return transform;
 }
 
+// Load an object into the OSG root.
+inline osg::ref_ptr<osg::Group> load_object_osg(const xgn3D::object& load_obj, osg::ref_ptr<osg::Group> root) {
+    log("0x3003", 0);
+    // Load the model
+    osg::ref_ptr<osg::Node> loaded_model = osgDB::readNodeFile(load_obj.obj_mesh.obj_file);
+    if (!loaded_model) {
+        log("0x9002", 3, "Failed to load: " + load_obj.obj_mesh.obj_file);
+        return root;
+    }
+
+    // Create transform node for position/rotation
+    auto transform = create_object_transform(load_obj);
+    transform->addChild(loaded_model);
+
+    // Apply material properties
+    osg::StateSet* stateset = loaded_model->getOrCreateStateSet();
+    osg::Material* material = new osg::Material;
+    
+    // Set material properties from xgn3D::material
+    material->setAmbient(osg::Material::FRONT_AND_BACK, 
+        osg::Vec4(load_obj.obj_material.ambient[0],
+                 load_obj.obj_material.ambient[1],
+                 load_obj.obj_material.ambient[2],
+                 1.0f));
+    
+    material->setDiffuse(osg::Material::FRONT_AND_BACK, 
+        osg::Vec4(load_obj.obj_material.diffuse[0],
+                 load_obj.obj_material.diffuse[1],
+                 load_obj.obj_material.diffuse[2],
+                 1.0f));
+    
+    material->setSpecular(osg::Material::FRONT_AND_BACK, 
+        osg::Vec4(load_obj.obj_material.specular[0],
+                 load_obj.obj_material.specular[1],
+                 load_obj.obj_material.specular[2],
+                 1.0f));
+    
+    material->setShininess(osg::Material::FRONT_AND_BACK, 
+        load_obj.obj_material.metal);
+
+    material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
+    stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
+
+    stateset->setAttribute(material);
+
+    root->addChild(transform);
+    return root;
+}
+
+// Setup the camera.
+void setup_camera(xgn3D::camera xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
+    log("0x3004", 0);
+    osg::Camera* cam = viewer->getCamera();
+    
+    // Set initial view
+    cam->setViewMatrixAsLookAt(
+        osg::Vec3d(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2]),
+        osg::Vec3d(0,0,0),  // Look at origin
+        osg::Vec3d(0,0,1)   // Z-up
+    );
+    
+    // Set projection
+    double fov = 30.0;
+    cam->setProjectionMatrixAsPerspective(
+        fov, xgn_camera.aspect_ratio, 
+        xgn_camera.clip_start, xgn_camera.clip_end
+    );
+}
+
+// Support for multiple interfaces in one window will come in future updates.
+inline osg::ref_ptr<osgViewer::Viewer> setup_view(osg::ref_ptr<osgViewer::Viewer> viewer, xgn::interface interface, xgn::window window) {
+    log("0x3005", 0);
+    // Set up view with proper window dimensions
+    viewer->setUpViewInWindow(100, 100, window.size_x, window.size_y);
+    
+    // Set window title
+    viewer->realize();
+    typedef osgViewer::Viewer::Windows Windows;
+    Windows windows;
+    viewer->getWindows(windows);
+    for(osgViewer::Viewer::Windows::iterator itr = windows.begin(); itr != windows.end(); ++itr) {
+        (*itr)->setWindowName(window.name);
+    }
+    return viewer;
+}
+
 void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window& loading_window) {
+    log("0x3006", 0);
     for (auto& interface : loading_window.interfaces) {
         if (interface.interface_type != "3D") continue;
         
@@ -102,7 +148,7 @@ void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window& loading_window) {
         for (auto& obj : scene.objects_loaded) {
             osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(obj.obj_mesh.obj_file);
             if (!node) {
-                log("101", 3, "Failed to load: " + obj.obj_mesh.obj_file);
+                log("0x9002", 3, "Failed to load: " + obj.obj_mesh.obj_file);
                 continue;
             }
             
@@ -171,30 +217,24 @@ void update_objects(xgn::window& window) {
     }
 }
 
-osg::ref_ptr<osg::Geode> create_axes() {
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-    geode->addDrawable(new osg::ShapeDrawable(new osg::Cylinder(osg::Vec3(1,0,0), 0.1f, 2.0f))); // X (Red)
-    geode->addDrawable(new osg::ShapeDrawable(new osg::Cylinder(osg::Vec3(0,1,0), 0.1f, 2.0f))); // Y (Green)
-    geode->addDrawable(new osg::ShapeDrawable(new osg::Cylinder(osg::Vec3(0,0,1), 0.1f, 2.0f))); // Z (Blue)
-    return geode;
-}
-
 // Startup OSG.
 std::pair<osg::ref_ptr<osgViewer::Viewer>, osg::ref_ptr<osg::Group>> setup_osg(window& win) {
+    // Create viewer first
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
     osg::ref_ptr<osg::Group> root = new osg::Group;
     
-    // Configure camera
-    setup_camera(win.interfaces[0].scenes[win.interfaces[0].scene_in_use].main_camera, *viewer);
+    // Setup view before camera
+    setup_view(viewer, win.interfaces[0], win);
     
-    // Setup view
-    viewer->setUpViewInWindow(100, 100, win.size_x, win.size_y);
-    viewer->realize();
+    // Then setup camera
+    setup_camera(win.interfaces[0].scenes[win.interfaces[0].scene_in_use].main_camera, viewer);
     
-    // Load objects
+    // Setup objects
     setup_objects(root, win);
     
+    // Critical: Set scene data
     viewer->setSceneData(root);
+    
     return {viewer, root};
 }
 

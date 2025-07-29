@@ -219,7 +219,9 @@
         "streamoperator": "cpp",
         "graphicswindow": "cpp",
         "renderstage": "cpp",
-        "sceneview": "cpp"
+        "sceneview": "cpp",
+        "__availability": "cpp",
+        "incrementalcompileoperation": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabledIfIncludesResolve"
+    "C_Cpp.errorSquiggles": "enabled"
 }
