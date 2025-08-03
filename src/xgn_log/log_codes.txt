@@ -13,13 +13,14 @@
 0x1004 This is a test program.
 
 # 0 - DEBUG 0x3000-0x4fff
-0x3000 This log is a placeholder.
+0x3000 Log:
 0x3001 Setting up root.
 0x3002 Creating object transform
 0x3003 Loading objects into OSG.
 0x3004 Setting up camera.
 0x3005 Setting up view.
 0x3006 Setting up objects.
+0x3007 Loading object.
 
 # 1 - INFO 0x5000-0x6fff
 

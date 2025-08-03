@@ -67,17 +67,6 @@ xgn3D::object load_object(object& loading_object) {
     return load_data(loading_object);
 }
 
-// Initialise Xangine instance.
-window init(window& default_window) {
-    auto [viewer, root] = setup_osg(default_window);
-    
-    // Store references
-    default_window.viewer = viewer;
-    default_window.root = root;
-    
-    return default_window;
-}
-
 int check_xangine_instance(window& default_window) {
     if (!default_window.root || !default_window.viewer) {
         log("0xd000", 5);
@@ -86,6 +75,23 @@ int check_xangine_instance(window& default_window) {
     else {
         return 0;
     }
+}
+
+// Initialise Xangine instance.
+window init(window& default_window) {
+    int i;
+    for (i = 0; i < default_window.interfaces.size(); i++) {
+        default_window.interfaces[i].scenes[default_window.interfaces[i].scene_in_use].objects_loaded = load_all_data(default_window.interfaces[i]);
+    }
+    auto [viewer, root] = setup_osg(default_window);
+    
+    // Store references
+    default_window.viewer = viewer;
+    default_window.root = root;
+    
+    check_xangine_instance(default_window);
+
+    return default_window;
 }
 
 pair<int, float> frame(window window, int fps_limit) {

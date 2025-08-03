@@ -27,9 +27,9 @@ osg::ref_ptr<osg::Group> setup_root() {
     return root;
 }
 
-inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(const xgn3D::object& obj) {
+inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(xgn3D::object& obj) {
     log("0x3002", 0);
-    auto transform = new osg::PositionAttitudeTransform;
+    osg::ref_ptr<osg::PositionAttitudeTransform> transform = new osg::PositionAttitudeTransform;
     
     // Set position
     transform->setPosition(osg::Vec3d(
@@ -49,12 +49,13 @@ inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(cons
         osg::Vec3d(0,0,1)                       // roll axis
     );
     transform->setAttitude(rotation);
+    obj.transform = transform;
     
     return transform;
 }
 
 // Load an object into the OSG root.
-inline osg::ref_ptr<osg::Group> load_object_osg(const xgn3D::object& load_obj, osg::ref_ptr<osg::Group> root) {
+inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object& load_obj, osg::ref_ptr<osg::Group> root) {
     log("0x3003", 0);
     // Load the model
     osg::ref_ptr<osg::Node> loaded_model = osgDB::readNodeFile(load_obj.obj_mesh.obj_file);
@@ -64,7 +65,7 @@ inline osg::ref_ptr<osg::Group> load_object_osg(const xgn3D::object& load_obj, o
     }
 
     // Create transform node for position/rotation
-    auto transform = create_object_transform(load_obj);
+    osg::ref_ptr<osg::PositionAttitudeTransform> transform = create_object_transform(load_obj);
     transform->addChild(loaded_model);
 
     // Apply material properties
@@ -127,7 +128,7 @@ inline osg::ref_ptr<osgViewer::Viewer> setup_view(osg::ref_ptr<osgViewer::Viewer
     log("0x3005", 0);
     // Set up view with proper window dimensions
     viewer->setUpViewInWindow(100, 100, window.size_x, window.size_y);
-    
+    viewer->home();
     // Set window title
     viewer->realize();
     typedef osgViewer::Viewer::Windows Windows;
@@ -142,22 +143,12 @@ inline osg::ref_ptr<osgViewer::Viewer> setup_view(osg::ref_ptr<osgViewer::Viewer
 void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window& loading_window) {
     log("0x3006", 0);
     for (auto& interface : loading_window.interfaces) {
-        if (interface.interface_type != "3D") continue;
-        
-        auto& scene = interface.scenes[interface.scene_in_use];
-        for (auto& obj : scene.objects_loaded) {
-            osg::ref_ptr<osg::Node> node = osgDB::readNodeFile(obj.obj_mesh.obj_file);
-            if (!node) {
-                log("0x9002", 3, "Failed to load: " + obj.obj_mesh.obj_file);
-                continue;
+        if (interface.interface_type == "3D") {
+            auto& scene = interface.scenes[interface.scene_in_use];
+            for (auto& obj : scene.objects_loaded) {
+                log("0x3007", 0);
+                root = load_object_osg(obj, root);
             }
-            
-            auto transform = create_object_transform(obj);
-            transform->addChild(node);
-            root->addChild(transform);
-            
-            // Store the transform reference in the object for later updates
-            obj.transform = transform; // You'll need to add this to your object struct
         }
     }
 }

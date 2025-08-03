@@ -23,12 +23,21 @@ int main() {
     obj_interface.interface_type = "3D";
     obj_interface.size_x = 800;
     obj_interface.size_y = 450;
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 0;  // X
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 0; // Y 
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.aspect_ratio = 16.0 / 9.0;
+    // Side view
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 10;  // X
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 10; // Y 
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 10;  // Z 
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = -90; // Slight downward pitch
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;  // Facing forward
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 0;  // No roll
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = 35;
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 135;
+    // Up to down view
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 5;  // X
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 0; // Y 
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 10;  // Z 
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = 90;
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;
+    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 0;
 
     window default_window;
     default_window.name = "Xangine Test";
@@ -38,9 +47,12 @@ int main() {
     default_window.interfaces.push_back(obj_interface);
 
     default_window = xgn::init(default_window);
-    
+    int frames = 0;
     while (!default_window.done) {
         xgn::frame(default_window, 60);
+        obj.rotation[2] += 1;
+        frames++;
+        cout << "Rendered " << frames << " frames." << endl;
     }
 
     log("96", 1);
