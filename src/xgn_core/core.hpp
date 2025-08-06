@@ -83,11 +83,7 @@ window init(window& default_window) {
     for (i = 0; i < default_window.interfaces.size(); i++) {
         default_window.interfaces[i].scenes[default_window.interfaces[i].scene_in_use].objects_loaded = load_all_data(default_window.interfaces[i]);
     }
-    auto [viewer, root] = setup_osg(default_window);
-    
-    // Store references
-    default_window.viewer = viewer;
-    default_window.root = root;
+    default_window = setup_osg(default_window);
     
     check_xangine_instance(default_window);
 
@@ -98,6 +94,7 @@ pair<int, float> frame(window window, int fps_limit) {
     // Use time.h to get current time
     static clock_t last_time = clock();
     clock_t current_time = clock();
+    int return_frame = render_frame(window);
     double elapsed_time = double(current_time - last_time) / CLOCKS_PER_SEC;
     if (elapsed_time < 1.0 / fps_limit) {
         // Wait until the next frame
@@ -105,7 +102,7 @@ pair<int, float> frame(window window, int fps_limit) {
         current_time = clock(); // Update current time after waiting
         elapsed_time = double(current_time - last_time) / CLOCKS_PER_SEC;
     }
-    return {render_frame(window), 1.0 / elapsed_time};
+    return {return_frame, 1.0 / elapsed_time};
 }
 
 };

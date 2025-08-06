@@ -55,13 +55,13 @@ inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(xgn3
 }
 
 // Load an object into the OSG root.
-inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object& load_obj, osg::ref_ptr<osg::Group> root) {
+inline pair<osg::ref_ptr<osg::Group>, xgn3D::object> load_object_osg(xgn3D::object& load_obj, osg::ref_ptr<osg::Group> root) {
     log("0x3003", 0);
     // Load the model
     osg::ref_ptr<osg::Node> loaded_model = osgDB::readNodeFile(load_obj.obj_mesh.obj_file);
     if (!loaded_model) {
         log("0x9002", 3, "Failed to load: " + load_obj.obj_mesh.obj_file);
-        return root;
+        return {root, load_obj};
     }
 
     // Create transform node for position/rotation
@@ -100,27 +100,57 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object& load_obj, osg::re
     stateset->setAttribute(material);
 
     root->addChild(transform);
-    return root;
+
+    return {root, load_obj};
 }
 
 // Setup the camera.
-void setup_camera(xgn3D::camera xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
+xgn3D::camera setup_camera(xgn3D::camera xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
     log("0x3004", 0);
     osg::Camera* cam = viewer->getCamera();
     
     // Set initial view
-    cam->setViewMatrixAsLookAt(
-        osg::Vec3d(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2]),
-        osg::Vec3d(0,0,0),  // Look at origin
-        osg::Vec3d(0,0,1)   // Z-up
-    );
+    // Convert degrees to radians
+    double pitch = osg::DegreesToRadians(xgn_camera.rotation[0]);
+    double roll  = osg::DegreesToRadians(xgn_camera.rotation[1]);
+    double yaw   = osg::DegreesToRadians(xgn_camera.rotation[2]);
+
+    int closer = 0;
+    bool done = false;
+    double rotation_z = xgn_camera.rotation[2];
+    while (!done) {
+        if (rotation_z < 360 && rotation_z > -360) {
+            done = true;
+        } else {
+            rotation_z -= 360;
+        }
+    }
+
+
+    osg::Vec3d forward;
+    forward.z() = -sin(pitch);
+    if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
+        forward.x() = -sin(yaw);
+        forward.y() = cos(yaw);
+    } else {
+        forward.x() = cos(yaw);
+        forward.y() = -sin(yaw);
+    }
+
+    osg::Vec3d eye(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2]);
+    osg::Vec3d center = eye + forward;
+    osg::Vec3d up(0, 0, 1); // Z-up
+
+    cam->setViewMatrixAsLookAt(eye, center, up);
     
     // Set projection
-    double fov = 30.0;
+    double fov = xgn_camera.fov;
     cam->setProjectionMatrixAsPerspective(
         fov, xgn_camera.aspect_ratio, 
         xgn_camera.clip_start, xgn_camera.clip_end
     );
+    xgn_camera.osg_camera = cam;
+    return xgn_camera;
 }
 
 // Support for multiple interfaces in one window will come in future updates.
@@ -147,69 +177,63 @@ void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window& loading_window) {
             auto& scene = interface.scenes[interface.scene_in_use];
             for (auto& obj : scene.objects_loaded) {
                 log("0x3007", 0);
-                root = load_object_osg(obj, root);
+                load_object_osg(obj, root);
             }
         }
     }
 }
 
-inline void update_camera_position(osg::Camera* osg_camera, const xgn3D::camera& xgn_camera) {
-    osg::Matrixd view_matrix;
+inline void update_camera_position(const xgn3D::camera& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
+    osg::Camera* cam = viewer->getCamera();
+
+    // Change view
+    // Convert degrees to radians
+    double pitch = osg::DegreesToRadians(xgn_camera.rotation[0]);
+    double roll  = osg::DegreesToRadians(xgn_camera.rotation[1]);
+    double yaw   = osg::DegreesToRadians(xgn_camera.rotation[2]);
+
+    int closer = 0;
+    bool done = false;
+    double rotation_z = xgn_camera.rotation[2];
+    osg::Vec3d forward;
+    forward.z() = -sin(pitch);
+    if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
+        forward.x() = -sin(yaw);
+        forward.y() = cos(yaw);
+    } else {
+        forward.x() = cos(yaw);
+        forward.y() = -sin(yaw);
+    }
+
+    osg::Vec3d eye(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2]);
+    osg::Vec3d center = eye + forward;
+    osg::Vec3d up(0, 0, 1); // Z-up
+
+    cam->setViewMatrixAsLookAt(eye, center, up);
     
-    // Create rotation from Euler angles (pitch, yaw, roll)
-    osg::Quat rot;
-    rot.makeRotate(
-        osg::DegreesToRadians(xgn_camera.rotation[1]), // yaw (Y)
-        osg::Vec3d(0,1,0),                             // yaw axis
-        osg::DegreesToRadians(xgn_camera.rotation[0]), // pitch (X)
-        osg::Vec3d(1,0,0),                             // pitch axis
-        osg::DegreesToRadians(xgn_camera.rotation[2]), // roll (Z)
-        osg::Vec3d(0,0,1)                              // roll axis
+    // Set projection
+    double fov = xgn_camera.fov;
+    cam->setProjectionMatrixAsPerspective(
+        fov, xgn_camera.aspect_ratio, 
+        xgn_camera.clip_start, xgn_camera.clip_end
     );
-    
-    // Set view matrix
-    view_matrix.makeLookAt(
-        osg::Vec3d(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2]), // eye
-        osg::Vec3d(xgn_camera.coordinates[0], xgn_camera.coordinates[1], xgn_camera.coordinates[2] - 1), // center
-        osg::Vec3d(0,1,0)  // up
-    );
-    
-    view_matrix.preMultRotate(rot);
-    osg_camera->setViewMatrix(view_matrix);
 }
 
-void update_objects(xgn::window& window) {
+xgn::window update_objects(xgn::window& window) {
     for (auto& interface : window.interfaces) {
         if (interface.interface_type != "3D") continue;
         
         auto& scene = interface.scenes[interface.scene_in_use];
         for (auto& obj : scene.objects_loaded) {
             if (!obj.transform) continue;
-            
-            // Update position
-            obj.transform->setPosition(osg::Vec3d(
-                obj.coordinates[0],
-                obj.coordinates[1],
-                obj.coordinates[2]
-            ));
-            
-            // Update rotation
-            osg::Quat rotation;
-            rotation.makeRotate(
-                osg::DegreesToRadians(obj.rotation[1]), // yaw
-                osg::Vec3d(0,1,0),
-                osg::DegreesToRadians(obj.rotation[0]), // pitch
-                osg::Vec3d(1,0,0),
-                osg::DegreesToRadians(obj.rotation[2]), // roll
-                osg::Vec3d(0,0,1)
-            );
-            obj.transform->setAttitude(rotation);
+            // window.root = load_object_osg(obj, window.root);
         }
     }
+    return window;
 }
 
 // Startup OSG.
-std::pair<osg::ref_ptr<osgViewer::Viewer>, osg::ref_ptr<osg::Group>> setup_osg(window& win) {
+window setup_osg(window& win) {
     // Create viewer first
     osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
     osg::ref_ptr<osg::Group> root = new osg::Group;
@@ -218,15 +242,18 @@ std::pair<osg::ref_ptr<osgViewer::Viewer>, osg::ref_ptr<osg::Group>> setup_osg(w
     setup_view(viewer, win.interfaces[0], win);
     
     // Then setup camera
-    setup_camera(win.interfaces[0].scenes[win.interfaces[0].scene_in_use].main_camera, viewer);
+    win.interfaces[0].scenes[win.interfaces[0].scene_in_use].main_camera = setup_camera(win.interfaces[0].scenes[win.interfaces[0].scene_in_use].main_camera, viewer);
     
     // Setup objects
     setup_objects(root, win);
     
     // Critical: Set scene data
     viewer->setSceneData(root);
+
+    win.viewer = viewer;
+    win.root = root;
     
-    return {viewer, root};
+    return win;
 }
 
 };

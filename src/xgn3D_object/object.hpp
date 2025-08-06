@@ -15,7 +15,7 @@ struct object {
     double rotation[3] = {0, 0, 0};
     xgn3D::mesh obj_mesh;
     xgn3D::material obj_material;
-
+    osg::ref_ptr<osg::Node> loaded_model;
     osg::ref_ptr<osg::PositionAttitudeTransform> transform = nullptr;
 };
 

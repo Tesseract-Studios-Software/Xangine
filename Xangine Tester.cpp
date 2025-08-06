@@ -28,16 +28,9 @@ int main() {
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 10;  // X
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 10; // Y 
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 10;  // Z 
-    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = 35;
+    obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = 45;
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;
     obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 135;
-    // Up to down view
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[0] = 5;  // X
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[1] = 0; // Y 
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.coordinates[2] = 10;  // Z 
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[0] = 90;
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[1] = 0;
-    // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] = 0;
 
     window default_window;
     default_window.name = "Xangine Test";
@@ -50,9 +43,13 @@ int main() {
     int frames = 0;
     while (!default_window.done) {
         xgn::frame(default_window, 60);
-        obj.rotation[2] += 1;
-        frames++;
-        cout << "Rendered " << frames << " frames." << endl;
+        // frames++;
+        // cout << "Rendered " << frames << " frames." << endl;
+
+        // obj.coordinates[0] += 0.01;
+        // cout << obj.coordinates[0] << endl;
+        // obj.rotation[2] += 1;
+        // obj_interface.scenes[obj_interface.scene_in_use].main_camera.rotation[2] += 1;
     }
 
     log("96", 1);
