@@ -10,7 +10,7 @@ using namespace std;
 
 namespace xgn {
 
-int filter = 0;
+int log_filter = 1;
 
 map<string, string> log_codes;
 
@@ -42,26 +42,37 @@ void read_log_codes(const string& filename) {
     file.close();
 }
 
-void log(const string& code, const int& level, const string& extra_info = "") {
-    read_log_codes("./src/xgn_log/log_codes.txt"); // Load log codes from file
-    if (level == 0 || filter <= 0) {
+int log(const string& code, const int& level, const string& extra_info = "") {
+    if (log_codes.empty()) {read_log_codes("./src/xgn_log/log_codes.txt");} // Load log codes from file
+    if (level == 0) {
+        if (log_filter > 0) {return 1;}
         cout << "[DEBUG] ";
-    } else if (level == 1 || filter <= 1) {
+    } else if (level == 1) {
+        if (log_filter > 1) {return 1;}
         cout << "[INFO] ";
-    } else if (level == 2 || filter <= 2) {
+    } else if (level == 2) {
+        if (log_filter > 2) {return 1;}
         cout << "[WARNING] ";
-    } else if (level == 3 || filter <= 3) {
+    } else if (level == 3) {
+        if (log_filter > 3) {return 1;}
         cout << "[ERROR] ";
-    } else if (level == 4 || filter <= 4) {
+    } else if (level == 4) {
+        if (log_filter > 4) {return 1;}
         cout << "[CRITICAL] ";
-    } else if (level == 5 || filter <= 5) {    
+    } else if (level == 5) {
+        if (log_filter > 5) {return 1;}
         cout << "[FATAL] ";
     } else {
         cout << "[UNKNOWN] ";
     }
     cout << "Code " << code << ": ";
-    cout << log_codes[code] << " ";
+    if (log_codes.count(code)) {
+        cout << log_codes[code] << " ";
+    } else {
+        cout << "Unknown code ";
+    }
     cout << extra_info << endl;
+    return 0;
 }
 
 };

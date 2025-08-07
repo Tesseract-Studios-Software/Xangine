@@ -8,7 +8,7 @@ namespace xgn3D {
 
 // Groups contain 3D objects.
 struct group {
-    vector<xgn3D::object> objects;
+    vector<xgn3D::object*> objects;
 };
 
 };

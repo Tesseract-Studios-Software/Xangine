@@ -31,8 +31,15 @@
 0x9001 Unknown interface type.
 0x9002 Wavefront .obj file cannot be loaded.
 0x9003 File not found.
+0x9004 Cannot create graphics context.
+0x9005 Failed to create graphics context.
+0x9006 Null camera in setup_view_window.
+0x9007 Invalid window or viewer in render_frame.
+0x9008 No valid graphics context.
+0x9009 Rendering failed:
 
 # 4 - CRITICAL 0xb000-0xcfff
 
 # 5 - FATAL 0xd000-0xefff
 0xd000 Xangine instance failed to initialise.
+0xd001 Failed to initialize viewer.

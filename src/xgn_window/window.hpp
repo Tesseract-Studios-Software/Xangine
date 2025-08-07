@@ -10,9 +10,11 @@ namespace xgn {
 
 // Windows contain interfaces.
 struct window {
-    vector<xgn::interface> interfaces;
+    vector<xgn::interface*> interfaces;
     int size_x = 800;
     int size_y = 450;
+    int screen_x = 100;
+    int screen_y = 100;
     bool is_main = false;
     string name = "Xangine Window";
     bool done = false;

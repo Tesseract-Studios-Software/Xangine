@@ -58,17 +58,27 @@ void set_executable_dir() {
 }
 
 // This loads all objects in an interface, it is not suggested to call this repeatively or else it may cause lag.
-vector<xgn3D::object> load_all_objects(interface& loading_interface) {
+vector<xgn3D::object*> load_all_objects(interface*& loading_interface) {
     return xgn::load_all_data(loading_interface);
 }
 
 // This loads the object inputted as the argument.
-xgn3D::object load_object(object& loading_object) {
+inline xgn3D::object* load_object(object*& loading_object) {
     return load_data(loading_object);
 }
 
-int check_xangine_instance(window& default_window) {
-    if (!default_window.root || !default_window.viewer) {
+// This loads all objects in an interface, it is not suggested to call this repeatively or else it may cause lag.
+vector<xgn3D::object*> load_all_objects(interface* loading_interface) {
+    return xgn::load_all_data(loading_interface);
+}
+
+// This loads the object inputted as the argument.
+xgn3D::object* load_object(object* loading_object) {
+    return load_data(loading_object);
+}
+
+int check_xangine_instance(window* default_window) {
+    if (!default_window->root || !default_window->viewer) {
         log("0xd000", 5);
         return -1;
     }
@@ -78,19 +88,17 @@ int check_xangine_instance(window& default_window) {
 }
 
 // Initialise Xangine instance.
-window init(window& default_window) {
+void init(window* default_window) {
     int i;
-    for (i = 0; i < default_window.interfaces.size(); i++) {
-        default_window.interfaces[i].scenes[default_window.interfaces[i].scene_in_use].objects_loaded = load_all_data(default_window.interfaces[i]);
+    for (i = 0; i < default_window->interfaces.size(); i++) {
+        default_window->interfaces[i]->scenes[default_window->interfaces[i]->scene_in_use]->objects_loaded = load_all_data(default_window->interfaces[i]);
     }
     default_window = setup_osg(default_window);
     
     check_xangine_instance(default_window);
-
-    return default_window;
 }
 
-pair<int, float> frame(window window, int fps_limit) {
+pair<int, float> frame(window* window, int fps_limit) {
     // Use time.h to get current time
     static clock_t last_time = clock();
     clock_t current_time = clock();

@@ -7,7 +7,7 @@
 
 // Containers contain windows.
 struct container {
-    vector<xgn::window> windows;
+    vector<xgn::window*> windows;
 };
 
 #endif // CONTAINER_HPP
