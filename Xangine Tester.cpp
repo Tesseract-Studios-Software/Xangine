@@ -14,6 +14,8 @@ int main() {
 
     xgn3D::object* obj = new xgn3D::object();
     obj->obj_mesh.obj_file = "./src/xgn3D_resources/default_cube.obj";
+    obj->obj_material.metal = 128.0;
+    obj->obj_material.emission = 1.0;
 
     xgn3D::group* obj_group = new xgn3D::group();
     obj_group->objects.push_back(obj);
@@ -50,9 +52,12 @@ int main() {
     xgn::init(default_window);
     int frames = 0;
     while (!default_window->done) {
-        xgn::frame(default_window, 60);
-        // frames++;
-        // cout << "Rendered " << frames << " frames." << endl;
+        auto [return_value, fps] = xgn::frame(default_window, 100);
+
+        // Clear console output for next frame
+        cout << "\033[2J\033[1;1H"; // ANSI escape code to clear console
+        frames++;
+        cout << "Frame:  " << frames << "\n" << "FPS: " << fps << endl;
 
         obj->coordinates[0] += 0.01;
         cout << obj->coordinates[0] << endl;

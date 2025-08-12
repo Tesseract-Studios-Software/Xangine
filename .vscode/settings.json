@@ -221,7 +221,8 @@
         "renderstage": "cpp",
         "sceneview": "cpp",
         "__availability": "cpp",
-        "incrementalcompileoperation": "cpp"
+        "incrementalcompileoperation": "cpp",
+        "material": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

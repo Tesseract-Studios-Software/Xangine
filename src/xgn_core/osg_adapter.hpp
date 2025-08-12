@@ -92,6 +92,12 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
     material->setShininess(osg::Material::FRONT_AND_BACK, 
         load_obj->obj_material.metal);
 
+    material->setEmission(osg::Material::FRONT_AND_BACK,
+        osg::Vec4(load_obj->obj_material.emissive[0] * load_obj->obj_material.emission,
+                 load_obj->obj_material.emissive[1] * load_obj->obj_material.emission,
+                 load_obj->obj_material.emissive[2] * load_obj->obj_material.emission,
+                 1.0f));
+
     material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
     stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
 
@@ -254,6 +260,7 @@ inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgV
         fov, xgn_camera->aspect_ratio, 
         xgn_camera->clip_start, xgn_camera->clip_end
     );
+    xgn_camera->osg_camera = cam;
 }
 
 xgn::window* update_objects(xgn::window*& window) {
@@ -262,7 +269,35 @@ xgn::window* update_objects(xgn::window*& window) {
             auto scene = interface->scenes[interface->scene_in_use];
             for (auto& obj : scene->objects_loaded) {
                 if (!obj->transform) continue;
-                // window->root = load_object_osg(obj, window->root);
+                // // Apply material properties
+                // osg::StateSet* stateset = obj->loaded_model->getOrCreateStateSet();
+                // osg::Material* material = new osg::Material;
+                // // Set material properties from xgn3D::material
+                // material->setAmbient(osg::Material::FRONT_AND_BACK, 
+                //     osg::Vec4(obj->obj_material.ambient[0],
+                //             obj->obj_material.ambient[1],
+                //             obj->obj_material.ambient[2],
+                //             1.0f));
+                
+                // material->setDiffuse(osg::Material::FRONT_AND_BACK, 
+                //     osg::Vec4(obj->obj_material.diffuse[0],
+                //             obj->obj_material.diffuse[1],
+                //             obj->obj_material.diffuse[2],
+                //             1.0f));
+                
+                // material->setSpecular(osg::Material::FRONT_AND_BACK, 
+                //     osg::Vec4(obj->obj_material.specular[0],
+                //             obj->obj_material.specular[1],
+                //             obj->obj_material.specular[2],
+                //             1.0f));
+                
+                // material->setShininess(osg::Material::FRONT_AND_BACK, 
+                //     obj->obj_material.metal);
+
+                // material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
+                // stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
+
+                // stateset->setAttribute(material);
             }
         }
     }
