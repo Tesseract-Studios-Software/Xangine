@@ -103,6 +103,9 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
 
     stateset->setAttribute(material);
 
+    load_obj->loaded_material = material;
+    load_obj->loaded_stateset = stateset;
+
     root->addChild(transform);
 
     return root;
@@ -263,45 +266,44 @@ inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgV
     xgn_camera->osg_camera = cam;
 }
 
-xgn::window* update_objects(xgn::window*& window) {
+void update_objects(xgn::window*& window) {
     for (auto& interface : window->interfaces) {
         if (interface->interface_type == "3D") {
             auto scene = interface->scenes[interface->scene_in_use];
-            for (auto& obj : scene->objects_loaded) {
+            for (auto*& obj : scene->objects_loaded) {
                 if (!obj->transform) continue;
-                // // Apply material properties
-                // osg::StateSet* stateset = obj->loaded_model->getOrCreateStateSet();
-                // osg::Material* material = new osg::Material;
-                // // Set material properties from xgn3D::material
-                // material->setAmbient(osg::Material::FRONT_AND_BACK, 
-                //     osg::Vec4(obj->obj_material.ambient[0],
-                //             obj->obj_material.ambient[1],
-                //             obj->obj_material.ambient[2],
-                //             1.0f));
+                // Apply material properties
+                osg::StateSet* stateset = obj->loaded_stateset;
+                osg::Material* material = obj->loaded_material;
+                // Set material properties from xgn3D::material
+                material->setAmbient(osg::Material::FRONT_AND_BACK, 
+                    osg::Vec4(obj->obj_material.ambient[0],
+                            obj->obj_material.ambient[1],
+                            obj->obj_material.ambient[2],
+                            1.0f));
                 
-                // material->setDiffuse(osg::Material::FRONT_AND_BACK, 
-                //     osg::Vec4(obj->obj_material.diffuse[0],
-                //             obj->obj_material.diffuse[1],
-                //             obj->obj_material.diffuse[2],
-                //             1.0f));
+                material->setDiffuse(osg::Material::FRONT_AND_BACK, 
+                    osg::Vec4(obj->obj_material.diffuse[0],
+                            obj->obj_material.diffuse[1],
+                            obj->obj_material.diffuse[2],
+                            1.0f));
                 
-                // material->setSpecular(osg::Material::FRONT_AND_BACK, 
-                //     osg::Vec4(obj->obj_material.specular[0],
-                //             obj->obj_material.specular[1],
-                //             obj->obj_material.specular[2],
-                //             1.0f));
+                material->setSpecular(osg::Material::FRONT_AND_BACK, 
+                    osg::Vec4(obj->obj_material.specular[0],
+                            obj->obj_material.specular[1],
+                            obj->obj_material.specular[2],
+                            1.0f));
                 
-                // material->setShininess(osg::Material::FRONT_AND_BACK, 
-                //     obj->obj_material.metal);
+                material->setShininess(osg::Material::FRONT_AND_BACK, 
+                    obj->obj_material.metal);
 
-                // material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
-                // stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
+                material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
+                stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
 
                 // stateset->setAttribute(material);
             }
         }
     }
-    return window;
 }
 
 // Startup OSG.

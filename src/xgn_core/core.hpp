@@ -99,7 +99,7 @@ void init(window* default_window) {
 }
 
 // Render the next frame. FPS limit can be ajusted to infinite if it is set to 0.
-pair<int, float> frame(window* window, int fps_limit) {
+pair<int, float> frame(window*& window, int fps_limit) {
     clock_t start_time = clock();
     int return_frame = render_frame(window);
     clock_t end_time = clock();

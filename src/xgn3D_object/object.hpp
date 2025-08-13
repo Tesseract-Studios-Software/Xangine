@@ -6,6 +6,7 @@
 #include "../xgn3D_datablock/mesh.hpp"
 #include "../xgn_log/log.hpp"
 #include <osg/Geode>
+#include <osg/Material>
 
 namespace xgn3D {
 
@@ -16,6 +17,8 @@ struct object {
     xgn3D::mesh obj_mesh;
     xgn3D::material obj_material;
     osg::ref_ptr<osg::Node> loaded_model;
+    osg::Material* loaded_material;
+    osg::StateSet* loaded_stateset;
     osg::ref_ptr<osg::PositionAttitudeTransform> transform = nullptr;
 };
 
