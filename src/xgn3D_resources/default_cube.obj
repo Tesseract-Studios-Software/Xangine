@@ -1,4 +1,7 @@
 # Xangine
+# Xangine is licensed under MIT License
+# Copyright (c) 2025 Tesseract Studios
+
 # Default cube
 o Cube
 v -1.0 -1.0 -1.0

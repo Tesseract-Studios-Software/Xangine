@@ -1,3 +1,6 @@
+// Xangine is licensed under MIT License
+// Copyright (c) 2025 Tesseract Studios
+
 #ifndef CORE_HPP
 #define CORE_HPP
 
@@ -91,7 +94,11 @@ int check_xangine_instance(window* default_window) {
 void init(window* default_window) {
     int i;
     for (i = 0; i < default_window->interfaces.size(); i++) {
-        default_window->interfaces[i]->scenes[default_window->interfaces[i]->scene_in_use]->objects_loaded = load_all_data(default_window->interfaces[i]);
+        default_window->interfaces[i]->scenes[
+            default_window->interfaces[i]->scene_in_use]->
+            objects_loaded = load_all_data(
+                default_window->interfaces[i]
+            );
     }
     default_window = setup_osg(default_window);
     

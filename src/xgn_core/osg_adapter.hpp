@@ -1,3 +1,6 @@
+// Xangine is licensed under MIT License
+// Copyright (c) 2025 Tesseract Studios
+
 #ifndef OSG_ADAPT_HPP
 #define OSG_ADAPT_HPP
 

@@ -1,3 +1,6 @@
+Xangine is licensed under MIT License
+Copyright (c) 2025 Tesseract Studios
+
 # SYSTEM 0x0000-0x0fff, 0xf000-0xffff
 0xffff :(
 0xfffe CAN'T
