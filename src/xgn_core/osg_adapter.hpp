@@ -115,7 +115,7 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
 }
 
 // Setup the camera.
-void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
+void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::View> viewer) {
     log("0x3004", 0);
     osg::Camera* cam = viewer->getCamera();
     cam->setClearColor(osg::Vec4(
@@ -194,12 +194,12 @@ void setup_view_window(xgn::window*& window) {
     }
 
     // Configure camera
-    osg::Camera* camera = window->viewer->getCamera();
+    osg::Camera* camera = window->viewer->getView(0)->getCamera();
     if (!camera) {
         log("0x9006", 3);
         return;
     }
-    window->viewer->setUpViewInWindow(window->screen_x, window->screen_y, window->size_x, window->size_y);
+    window->viewer->getView(0)->getCamera();
     camera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
     // Realize viewer after camera is set up
@@ -236,33 +236,31 @@ void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window*& loading_window) 
     }
 }
 
-void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
-    xgn_camera->osg_camera = viewer->getCamera();
-    viewer->getCamera()->setClearColor(osg::Vec4(
-        xgn_camera->background_colour[0], 
-        xgn_camera->background_colour[1], 
+void update_camera_position(xgn3D::camera*& xgn_camera, osg::Camera* osg_camera) {
+    if (!xgn_camera || !osg_camera) {
+        log("0x9006", 3, "Null camera in update_camera_position");
+        return;
+    }
+
+    // Update background color
+    osg_camera->setClearColor(osg::Vec4(
+        xgn_camera->background_colour[0],
+        xgn_camera->background_colour[1],
         xgn_camera->background_colour[2],
         xgn_camera->background_colour[3]
     ));
-    
-    // Set initial view
+
     // Convert degrees to radians
     double pitch = osg::DegreesToRadians(xgn_camera->rotation[0]);
     double roll  = osg::DegreesToRadians(xgn_camera->rotation[1]);
     double yaw   = osg::DegreesToRadians(xgn_camera->rotation[2]);
 
-    int closer = 0;
-    bool done = false;
+    // Normalize rotation (optional, prevents large values)
     double rotation_z = xgn_camera->rotation[2];
-    while (!done) {
-        if (rotation_z < 360 && rotation_z > -360) {
-            done = true;
-        } else {
-            rotation_z -= 360;
-        }
-    }
+    while (rotation_z >= 360) rotation_z -= 360;
+    while (rotation_z < 0) rotation_z += 360;
 
-
+    // Calculate forward direction
     osg::Vec3d forward;
     forward.z() = -sin(pitch);
     if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
@@ -273,18 +271,27 @@ void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::
         forward.y() = -sin(yaw);
     }
 
-    osg::Vec3d eye(xgn_camera->coordinates[0], xgn_camera->coordinates[1], xgn_camera->coordinates[2]);
+    // Set view matrix
+    osg::Vec3d eye(
+        xgn_camera->coordinates[0],
+        xgn_camera->coordinates[1],
+        xgn_camera->coordinates[2]
+    );
     osg::Vec3d center = eye + forward;
     osg::Vec3d up(0, 0, 1); // Z-up
 
-    viewer->getCamera()->setViewMatrixAsLookAt(eye, center, up);
-    
-    // Set projection
-    double fov = xgn_camera->fov;
-    viewer->getCamera()->setProjectionMatrixAsPerspective(
-        fov, xgn_camera->aspect_ratio, 
-        xgn_camera->clip_start, xgn_camera->clip_end
+    osg_camera->setViewMatrixAsLookAt(eye, center, up);
+
+    // Update projection matrix
+    osg_camera->setProjectionMatrixAsPerspective(
+        xgn_camera->fov,
+        xgn_camera->aspect_ratio,
+        xgn_camera->clip_start,
+        xgn_camera->clip_end
     );
+
+    // Store the OSG camera reference (optional)
+    xgn_camera->osg_camera = osg_camera;
 }
 
 void update_objects(xgn::window*& window) {
@@ -347,33 +354,60 @@ void update_objects(xgn::window*& window) {
 }
 
 // Startup OSG.
+// Startup OSG.
 window* setup_osg(window* win) {
-    // Create viewer with proper traits
-    win->viewer = new osgViewer::Viewer;
-    
-    // Create root node
+    // 1. Create CompositeViewer and root node
+    win->viewer = new osgViewer::CompositeViewer;
     osg::ref_ptr<osg::Group> root = setup_root();
-    
-    // Setup window first
-    setup_view_window(win);
-
-    int i;
-    for (i = 0; i < win->interfaces.size(); i++) {
-        setup_view_interface(win->interfaces[i]);
-    }
-    
-    // Setup camera after window is created
-    for (auto& interface : win->interfaces) {
-        setup_camera(interface->scenes[interface->scene_in_use]->main_camera, win->viewer);
-    }
-    
-    // Setup objects
-    setup_objects(root, win);
-    
-    // Set scene data
-    win->viewer->setSceneData(root);
     win->root = root;
-    
+
+    // 2. Configure graphics context (critical for window title and rendering)
+    osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+    traits->x = win->screen_x;
+    traits->y = win->screen_y;
+    traits->width = win->size_x;
+    traits->height = win->size_y;
+    traits->windowDecoration = true;  // Must be true for title bar
+    traits->doubleBuffer = true;
+    traits->supportsResize = true;
+    traits->windowName = win->name;   // Set window title here
+
+    osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
+    if (!gc || !gc->valid()) {
+        log("0x9004", 3, "Failed to create graphics context");
+        return win;
+    }
+    gc->realize();  // Activate the context
+
+    // 3. Load objects into the root node
+    setup_objects(root, win);  // Must be called before creating views!
+
+    // 4. Create views for each interface and assign cameras
+    for (auto* interface : win->interfaces) {
+        osg::ref_ptr<osgViewer::View> view = new osgViewer::View;
+        view->setSceneData(root);  // Link root to the view
+
+        // Configure camera viewport (matches interface dimensions)
+        osg::Camera* camera = view->getCamera();
+        camera->setGraphicsContext(gc);
+        camera->setViewport(
+            interface->coordinates_on_screen_x,
+            interface->coordinates_on_screen_y,
+            interface->size_x,
+            interface->size_y
+        );
+
+        // Set camera properties from the interface's scene
+        if (interface->scenes.size() > 0) {
+            auto* scene = interface->scenes[interface->scene_in_use];
+            if (scene->main_camera) {
+                setup_camera(scene->main_camera, view);  // Pass the view, not the interface's viewer
+            }
+        }
+
+        win->viewer->addView(view);
+    }
+
     return win;
 }
 
