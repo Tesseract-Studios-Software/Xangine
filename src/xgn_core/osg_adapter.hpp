@@ -96,9 +96,9 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
         load_obj->obj_material.metal);
 
     material->setEmission(osg::Material::FRONT_AND_BACK,
-        osg::Vec4(load_obj->obj_material.emissive[0] * load_obj->obj_material.emission,
-                 load_obj->obj_material.emissive[1] * load_obj->obj_material.emission,
-                 load_obj->obj_material.emissive[2] * load_obj->obj_material.emission,
+        osg::Vec4(load_obj->obj_material.emission,
+                 load_obj->obj_material.emission,
+                 load_obj->obj_material.emission,
                  1.0f));
 
     material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
@@ -118,7 +118,11 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
 void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
     log("0x3004", 0);
     osg::Camera* cam = viewer->getCamera();
-    cam->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    cam->setClearColor(osg::Vec4(
+        xgn_camera->background_colour[0], 
+        xgn_camera->background_colour[1], 
+        xgn_camera->background_colour[2], 
+        xgn_camera->background_colour[3]));
     
     // Set initial view
     // Convert degrees to radians
