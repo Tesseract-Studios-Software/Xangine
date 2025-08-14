@@ -6,7 +6,7 @@
 
 #include <xgn_interface/interface.hpp>
 #include <xgn_log/log.hpp>
-#include <osgViewer/Viewer>
+#include <osgViewer/CompositeViewer>
 #include <vector>
 
 namespace xgn {
@@ -22,7 +22,7 @@ struct window {
     string name = "Xangine Window";
     bool done = false;
     
-    osg::ref_ptr<osgViewer::Viewer> viewer;
+    osg::ref_ptr<osgViewer::CompositeViewer> viewer;
     osg::ref_ptr<osg::Group> root;
 };
 

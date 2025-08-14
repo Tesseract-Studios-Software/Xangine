@@ -222,7 +222,8 @@
         "sceneview": "cpp",
         "__availability": "cpp",
         "incrementalcompileoperation": "cpp",
-        "material": "cpp"
+        "material": "cpp",
+        "compositeviewer": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
