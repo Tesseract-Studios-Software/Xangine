@@ -236,9 +236,14 @@ void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window*& loading_window) 
     }
 }
 
-inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
+void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
     xgn_camera->osg_camera = viewer->getCamera();
-    xgn_camera->osg_camera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    viewer->getCamera()->setClearColor(osg::Vec4(
+        xgn_camera->background_colour[0], 
+        xgn_camera->background_colour[1], 
+        xgn_camera->background_colour[2],
+        xgn_camera->background_colour[3]
+    ));
     
     // Set initial view
     // Convert degrees to radians
@@ -272,11 +277,11 @@ inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgV
     osg::Vec3d center = eye + forward;
     osg::Vec3d up(0, 0, 1); // Z-up
 
-    xgn_camera->osg_camera->setViewMatrixAsLookAt(eye, center, up);
+    viewer->getCamera()->setViewMatrixAsLookAt(eye, center, up);
     
     // Set projection
     double fov = xgn_camera->fov;
-    xgn_camera->osg_camera->setProjectionMatrixAsPerspective(
+    viewer->getCamera()->setProjectionMatrixAsPerspective(
         fov, xgn_camera->aspect_ratio, 
         xgn_camera->clip_start, xgn_camera->clip_end
     );

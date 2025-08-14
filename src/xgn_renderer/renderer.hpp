@@ -29,7 +29,7 @@ int render_frame(window*& loading_window) {
     update_objects(loading_window);
 
     // Update cameras
-    for (auto& interface : loading_window->interfaces) {
+    for (auto*& interface : loading_window->interfaces) {
         if (!interface || !interface->viewer) continue;
         update_camera_position(
             interface->scenes[interface->scene_in_use]->main_camera, 
@@ -38,6 +38,15 @@ int render_frame(window*& loading_window) {
     }
 
     // Render frame
+    for (auto*& interface : loading_window->interfaces) {
+        if (!interface || !interface->viewer) continue;
+        try {
+            interface->viewer->frame();
+        } catch (const std::exception& e) {
+            log("0x9009", 3, e.what());
+            return -1;
+        }
+    }
     try {
         loading_window->viewer->frame();
     } catch (const std::exception& e) {
