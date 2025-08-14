@@ -10,7 +10,7 @@ Xangine License: /LICENSE.txt
 OpenSceneGraph License: /OSG-LICENSE.txt
 
 ## Documentation
-https://sites.google.com/view/xangine/docs?authuser=0
+https://sites.google.com/view/xangine/docs
 
 ##
 Xangine is licensed under MIT License
