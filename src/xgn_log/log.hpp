@@ -16,6 +16,7 @@ namespace xgn {
 int log_filter = 1;
 
 map<string, string> log_codes;
+string log_code_path;
 
 // DEBUG - For debugging
 // INFO - Log normal activities
@@ -46,7 +47,7 @@ void read_log_codes(const string& filename) {
 }
 
 int log(const string& code, const int& level, const string& extra_info = "") {
-    if (log_codes.empty()) {read_log_codes("./src/xgn_log/log_codes.txt");} // Load log codes from file
+    if (log_codes.empty()) {read_log_codes(log_code_path);} // Load log codes from file
     if (level == 0) {
         if (log_filter > 0) {return 1;}
         cout << "[DEBUG] ";

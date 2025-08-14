@@ -4,8 +4,8 @@
 #ifndef GROUP_HPP
 #define GROUP_HPP
 
-#include "../xgn3D_object/object.hpp"
-#include "../xgn_log/log.hpp"
+#include <xgn3D_object/object.hpp>
+#include <xgn_log/log.hpp>
 
 namespace xgn3D {
 

@@ -4,10 +4,10 @@
 #ifndef CORE_HPP
 #define CORE_HPP
 
-#include "../xgn3D_object/object.hpp"
-#include "./3D_data_loader.hpp"
-#include "./osg_adapter.hpp"
-#include "../xgn_renderer/renderer.hpp"
+#include <xgn3D_object/object.hpp>
+#include <xgn_core/3D_data_loader.hpp>
+#include <xgn_core/osg_adapter.hpp>
+#include <xgn_renderer/renderer.hpp>
 #include <vector>
 #include <libgen.h>
 #include <unistd.h>

@@ -1,1 +1,2 @@
-clang++ -std=c++17 -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -rpath /usr/local/lib -o [OUT_NAME] [IN_NAME]
+clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -I./src -I./OpenSceneGraph/include -o [output] [input]
+clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -I./src -I./OpenSceneGraph/include -o "./Tester/Xangine Tester" "./Tester/Xangine Tester.cpp"

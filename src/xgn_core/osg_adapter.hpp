@@ -4,6 +4,10 @@
 #ifndef OSG_ADAPT_HPP
 #define OSG_ADAPT_HPP
 
+#include <xgn_log/log.hpp>
+#include <xgn_container/container.hpp>
+#include <xgn3D_object/object.hpp>
+#include <xgn3D_camera/camera.hpp>
 #include <osgViewer/Viewer>
 #include <osg/ShapeDrawable>
 #include <osg/Drawable>
@@ -12,10 +16,6 @@
 #include <osg/DisplaySettings>
 #include <osgViewer/ViewerEventHandlers>
 #include <osg/Material>
-#include "../xgn_log/log.hpp"
-#include "../xgn_container/container.hpp"
-#include "../xgn3D_object/object.hpp"
-#include "../xgn3D_camera/camera.hpp"
 
 
 namespace xgn {
@@ -233,9 +233,10 @@ void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window*& loading_window) 
 }
 
 inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::Viewer> viewer) {
-    osg::Camera* cam = xgn_camera->osg_camera;
-
-    // Change view
+    xgn_camera->osg_camera = viewer->getCamera();
+    xgn_camera->osg_camera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    
+    // Set initial view
     // Convert degrees to radians
     double pitch = osg::DegreesToRadians(xgn_camera->rotation[0]);
     double roll  = osg::DegreesToRadians(xgn_camera->rotation[1]);
@@ -244,6 +245,15 @@ inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgV
     int closer = 0;
     bool done = false;
     double rotation_z = xgn_camera->rotation[2];
+    while (!done) {
+        if (rotation_z < 360 && rotation_z > -360) {
+            done = true;
+        } else {
+            rotation_z -= 360;
+        }
+    }
+
+
     osg::Vec3d forward;
     forward.z() = -sin(pitch);
     if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
@@ -258,15 +268,14 @@ inline void update_camera_position(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgV
     osg::Vec3d center = eye + forward;
     osg::Vec3d up(0, 0, 1); // Z-up
 
-    cam->setViewMatrixAsLookAt(eye, center, up);
+    xgn_camera->osg_camera->setViewMatrixAsLookAt(eye, center, up);
     
     // Set projection
     double fov = xgn_camera->fov;
-    cam->setProjectionMatrixAsPerspective(
+    xgn_camera->osg_camera->setProjectionMatrixAsPerspective(
         fov, xgn_camera->aspect_ratio, 
         xgn_camera->clip_start, xgn_camera->clip_end
     );
-    xgn_camera->osg_camera = cam;
 }
 
 void update_objects(xgn::window*& window) {
@@ -302,6 +311,25 @@ void update_objects(xgn::window*& window) {
 
                 material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
                 stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
+
+                obj->transform->setPosition(osg::Vec3d(
+                    obj->coordinates[0],
+                    obj->coordinates[1],
+                    obj->coordinates[2]
+                ));
+                
+                // Set rotation (convert degrees to radians)
+                osg::Quat rotation;
+                rotation.makeRotate(
+                    osg::DegreesToRadians(obj->rotation[1]), // yaw (Y)
+                    osg::Vec3d(0,1,0),                     // yaw axis
+                    osg::DegreesToRadians(obj->rotation[0]), // pitch (X)
+                    osg::Vec3d(1,0,0),                     // pitch axis
+                    osg::DegreesToRadians(obj->rotation[2]), // roll (Z)
+                    osg::Vec3d(0,0,1)                       // roll axis
+                );
+                
+                obj->transform->setAttitude(rotation);
 
                 // stateset->setAttribute(material);
             }

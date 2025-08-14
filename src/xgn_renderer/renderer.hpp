@@ -4,8 +4,8 @@
 #ifndef RENDERER_HPP
 #define RENDERER_HPP
 
-#include "../xgn_window/window.hpp"
-#include "../xgn_core/osg_adapter.hpp"
+#include <xgn_window/window.hpp>
+#include <xgn_core/osg_adapter.hpp>
 #include <vector>
 
 namespace xgn {

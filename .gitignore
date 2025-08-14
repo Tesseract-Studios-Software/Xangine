@@ -3,3 +3,7 @@ src/.DS_Store
 src/xgn_renderer/.DS_Store
 .DS_Store
 src/.DS_Store
+Altaris.obj
+Altaris.mtl
+/Tester
+OpenSceneGraph/

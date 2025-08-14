@@ -4,8 +4,8 @@
 #ifndef INTERFACE_HPP
 #define INTERFACE_HPP
 
-#include "../xgn3D_scene/scene.hpp"
-#include "../xgn_log/log.hpp"
+#include <xgn3D_scene/scene.hpp>
+#include <xgn_log/log.hpp>
 #include <osgViewer/Viewer>
 #include <vector>
 

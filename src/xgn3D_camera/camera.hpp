@@ -15,6 +15,7 @@ struct camera {
     double aspect_ratio = 16.0 / 9.0;
     double coordinates[3] = {0, 0, 0};
     double rotation[3] = {0, 0, 0};
+    float background_colour[4] = {0.0f, 0.0f, 0.0f, 1.0f}; // The background colour of the camera
     osg::Camera* osg_camera;
 };
 

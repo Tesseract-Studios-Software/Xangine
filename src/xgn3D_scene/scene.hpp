@@ -4,9 +4,9 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "../xgn3D_group/group.hpp"
-#include "../xgn_log/log.hpp"
-#include "../xgn3D_camera/camera.hpp"
+#include <xgn3D_group/group.hpp>
+#include <xgn_log/log.hpp>
+#include <xgn3D_camera/camera.hpp>
 
 namespace xgn3D {
 

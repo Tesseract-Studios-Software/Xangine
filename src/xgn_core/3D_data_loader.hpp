@@ -4,10 +4,10 @@
 #ifndef DATA_LOADER_HPP
 #define DATA_LOADER_HPP
 
-#include "../xgn_container/container.hpp"
-#include "../xgn3D_object/object.hpp"
-#include "../xgn3D_datablock/datablock.hpp"
-#include "../xgn_core/osg_adapter.hpp"
+#include <xgn_container/container.hpp>
+#include <xgn3D_object/object.hpp>
+#include <xgn3D_datablock/datablock.hpp>
+#include <xgn_core/osg_adapter.hpp>
 #include <vector>
 
 

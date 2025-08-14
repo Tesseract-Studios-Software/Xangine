@@ -4,8 +4,8 @@
 #ifndef WINDOW_HPP
 #define WINDOW_HPP
 
-#include "../xgn_interface/interface.hpp"
-#include "../xgn_log/log.hpp"
+#include <xgn_interface/interface.hpp>
+#include <xgn_log/log.hpp>
 #include <osgViewer/Viewer>
 #include <vector>
 

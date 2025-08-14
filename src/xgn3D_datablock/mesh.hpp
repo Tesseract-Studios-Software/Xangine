@@ -6,7 +6,7 @@
 
 #include <string>
 #include <fstream>
-#include "../xgn_log/log.hpp"
+#include <xgn_log/log.hpp>
 using namespace std;
 
 namespace xgn3D {
