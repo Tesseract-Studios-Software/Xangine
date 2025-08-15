@@ -12,29 +12,20 @@ namespace xgn {
 
 // Render the next frame.
 int render_frame(window*& loading_window) {
-    // Null check first
     if (!loading_window || !loading_window->viewer) {
         log("0x9007", 3);
-        return -1;
-    }
-
-    // Verify graphics context
-    if (!loading_window->viewer->getCamera() || 
-        !loading_window->viewer->getCamera()->getGraphicsContext()) {
-        log("0x9008", 3);
         return -1;
     }
 
     // Update objects
     update_objects(loading_window);
 
-    // Update cameras
-    for (auto& interface : loading_window->interfaces) {
-        if (!interface || !interface->viewer) continue;
-        update_camera_position(
-            interface->scenes[interface->scene_in_use]->main_camera, 
-            interface->viewer
-        );
+    // Update cameras for each view
+    for (auto* interface : loading_window->interfaces) {
+        auto* scene = interface->scenes[interface->scene_in_use];
+        if (scene && scene->main_camera) {
+            update_camera_position(scene->main_camera, loading_window->viewer->getView(0)->getCamera());
+        }
     }
 
     // Render frame
