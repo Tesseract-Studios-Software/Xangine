@@ -157,14 +157,19 @@ void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::View> view
     osg::Vec3d up(0, 0, 1); // Z-up
 
     cam->setViewMatrixAsLookAt(eye, center, up);
-    
-    // Set projection
-    double fov = xgn_camera->fov;
-    cam->setProjectionMatrixAsPerspective(
-        fov, xgn_camera->aspect_ratio, 
-        xgn_camera->clip_start, xgn_camera->clip_end
-    );
-    xgn_camera->osg_camera = cam;
+   
+    if (xgn_camera->type == 0) {
+        // Set projection
+        double fov = xgn_camera->fov;
+        cam->setProjectionMatrixAsPerspective(
+            fov, xgn_camera->aspect_ratio, 
+            xgn_camera->clip_start, xgn_camera->clip_end
+        );
+        xgn_camera->osg_camera = cam;
+    } else if (xgn_camera->type == 1) {
+        cam->setProjectionMatrix(osg::Matrix::ortho2D(0, xgn_camera->size, 0, xgn_camera->size / xgn_camera->aspect_ratio)); // 2D space
+        cam->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+    }
 }
 
 // Setup the window
