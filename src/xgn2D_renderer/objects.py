@@ -1,8 +1,8 @@
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk # type: ignore
 import math
 import tkinter as tk
 import time
-import multitasking
+import multitasking # type: ignore
 
 class movement:
     def __init__(self, object):

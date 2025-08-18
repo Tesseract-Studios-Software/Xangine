@@ -1,10 +1,6 @@
-from PIL import Image, ImageTk
-import adapter
+from PIL import Image, ImageTk # type: ignore
 import objects
 import scenes
-
-def display(data, canvas, width, height):
-    adapter.display(data, canvas, width, height)
 
 def render(scene):
     # Load all the textures
