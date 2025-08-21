@@ -19,7 +19,7 @@ struct interface {
     int size_x = 100; // X-axis length of the interface.
     int size_y = 100; // Y-axis length of the interface.
     string interface_type = "3D"; // 3D / UI
-    osg::ref_ptr<osgViewer::Viewer> viewer;
+    osg::ref_ptr<osgViewer::View> view;
 };
 
 };
