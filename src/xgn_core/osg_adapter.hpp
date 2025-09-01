@@ -8,6 +8,7 @@
 #include <xgn_container/container.hpp>
 #include <xgn3D_object/object.hpp>
 #include <xgn3D_camera/camera.hpp>
+#include <xgnUI_key/keyboard.hpp>
 #include <osgViewer/Viewer>
 #include <osg/ShapeDrawable>
 #include <osg/Drawable>
@@ -16,7 +17,6 @@
 #include <osg/DisplaySettings>
 #include <osgViewer/ViewerEventHandlers>
 #include <osg/Material>
-
 
 namespace xgn {
 
@@ -32,25 +32,25 @@ inline osg::ref_ptr<osg::PositionAttitudeTransform> create_object_transform(xgn3
     log("0x3002", 0);
     osg::ref_ptr<osg::PositionAttitudeTransform> transform = new osg::PositionAttitudeTransform;
     
-    // Set position
+    // Set position using vec3D transform
     transform->setPosition(osg::Vec3d(
-        obj->coordinates[0],
-        obj->coordinates[1],
-        obj->coordinates[2]
+        obj->transform.x,
+        obj->transform.y,
+        obj->transform.z
     ));
     
     // Set rotation (convert degrees to radians)
     osg::Quat rotation;
     rotation.makeRotate(
-        osg::DegreesToRadians(obj->rotation[1]), // yaw (Y)
+        osg::DegreesToRadians(obj->transform.rotation_y), // yaw (Y)
         osg::Vec3d(0,1,0),                     // yaw axis
-        osg::DegreesToRadians(obj->rotation[0]), // pitch (X)
+        osg::DegreesToRadians(obj->transform.rotation_x), // pitch (X)
         osg::Vec3d(1,0,0),                     // pitch axis
-        osg::DegreesToRadians(obj->rotation[2]), // roll (Z)
+        osg::DegreesToRadians(obj->transform.rotation_z), // roll (Z)
         osg::Vec3d(0,0,1)                       // roll axis
     );
     transform->setAttitude(rotation);
-    obj->transform = transform;
+    obj->osg_transform = transform;
     
     return transform;
 }
@@ -124,33 +124,29 @@ void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::View> view
         xgn_camera->background_colour[2], 
         xgn_camera->background_colour[3]));
     
-    // Set initial view
     // Convert degrees to radians
-    double pitch = osg::DegreesToRadians(xgn_camera->rotation[0]);
-    double roll  = osg::DegreesToRadians(xgn_camera->rotation[1]);
-    double yaw   = osg::DegreesToRadians(xgn_camera->rotation[2]);
+    double pitch = osg::DegreesToRadians(xgn_camera->transform.rotation_x);
+    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z);
 
-    int closer = 0;
-    bool done = false;
-    double rotation_z = xgn_camera->rotation[2];
-    while (!done) {
-        if (rotation_z < 360 && rotation_z > -360) {
-            done = true;
-        } else {
-            rotation_z -= 360;
-        }
-    }
+    xgn::vec3D forward;
+    forward.x = cos(yaw) * cos(pitch);
+    forward.y = sin(yaw) * cos(pitch);
+    forward.z = sin(pitch);
+    forward = forward.normalize();
 
+    // Calculate right vector (cross product of forward and world up)
+    xgn::vec3D right;
+    right.x = std::cos(yaw - 1.5708); // 90 degrees in radians
+    right.y = std::sin(yaw - 1.5708);
+    right.z = 0;
+    right = right.normalize();
 
-    osg::Vec3d forward;
-    forward.z() = -sin(pitch);
-    if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
-        forward.x() = -sin(yaw);
-        forward.y() = cos(yaw);
-    } else {
-        forward.x() = cos(yaw);
-        forward.y() = -sin(yaw);
-    }
+    // Calculate up vector (cross product of forward and right)
+    xgn::vec3D up;
+    up.x = forward.y * right.z - forward.z * right.y;
+    up.y = forward.z * right.x - forward.x * right.z;
+    up.z = forward.x * right.y - forward.y * right.x;
+    up = up.normalize();
 
     osg::Vec3d eye(xgn_camera->coordinates[0], xgn_camera->coordinates[1], xgn_camera->coordinates[2]);
     osg::Vec3d center = eye + forward;
@@ -216,17 +212,17 @@ void setup_view_window(xgn::window*& window) {
     }
 }
 
-void setup_view_interface(xgn::interface*& interface) {
-    log("0x3005", 0);
-    // Use the viewer already created for the interface (if any), or pass as parameter if needed
-    osg::ref_ptr<osgViewer::Viewer> viewer = interface->viewer;
-    if (!viewer) return; // Defensive: do nothing if viewer is not set
-    // Set up the embedded view
-    viewer->setUpViewerAsEmbeddedInWindow(interface->coordinates_on_screen_x, interface->coordinates_on_screen_y,
-                                          interface->size_x, interface->size_y);
-    viewer->home();
-    viewer->realize();
-}
+// void setup_view_interface(xgn::interface*& interface) {
+//     log("0x3005", 0);
+//     // Use the viewer already created for the interface (if any), or pass as parameter if needed
+//     osg::ref_ptr<osgViewer::Viewer> viewer = interface->view;
+//     if (!viewer) return; // Defensive: do nothing if viewer is not set
+//     // Set up the embedded view
+//     viewer->setUpViewerAsEmbeddedInWindow(interface->coordinates_on_screen_x, interface->coordinates_on_screen_y,
+//                                           interface->size_x, interface->size_y);
+//     viewer->home();
+//     viewer->realize();
+// }
 
 void setup_objects(osg::ref_ptr<osg::Group> root, xgn::window*& loading_window) {
     log("0x3006", 0);
@@ -256,36 +252,40 @@ void update_camera_position(xgn3D::camera*& xgn_camera, osg::Camera* osg_camera)
     ));
 
     // Convert degrees to radians
-    double pitch = osg::DegreesToRadians(xgn_camera->rotation[0]);
-    double roll  = osg::DegreesToRadians(xgn_camera->rotation[1]);
-    double yaw   = osg::DegreesToRadians(xgn_camera->rotation[2]);
+    double pitch = osg::DegreesToRadians(xgn_camera->transform.rotation_x);
+    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z);
+    
+    // Calculate forward direction using vec3D for Z-up coordinate system
+    xgn::vec3D forward;
+    forward.x = std::cos(yaw) * std::cos(pitch);
+    forward.y = std::sin(yaw) * std::cos(pitch);
+    forward.z = std::sin(pitch);
+    forward = forward.normalize();
 
-    // Normalize rotation (optional, prevents large values)
-    double rotation_z = xgn_camera->rotation[2];
-    while (rotation_z >= 360) rotation_z -= 360;
-    while (rotation_z < 0) rotation_z += 360;
+    // Calculate right vector
+    xgn::vec3D right;
+    right.x = std::cos(yaw - 1.5708);
+    right.y = std::sin(yaw - 1.5708);
+    right.z = 0;
+    right = right.normalize();
 
-    // Calculate forward direction
-    osg::Vec3d forward;
-    forward.z() = -sin(pitch);
-    if ((rotation_z >= -45 && rotation_z < 45) || (rotation_z >= 135 && rotation_z < 225)) {
-        forward.x() = -sin(yaw);
-        forward.y() = cos(yaw);
-    } else {
-        forward.x() = cos(yaw);
-        forward.y() = -sin(yaw);
-    }
+    // Calculate up vector
+    xgn::vec3D up;
+    up.x = forward.y * right.z - forward.z * right.y;
+    up.y = forward.z * right.x - forward.x * right.z;
+    up.z = forward.x * right.y - forward.y * right.x;
+    up = up.normalize();
 
     // Set view matrix
     osg::Vec3d eye(
-        xgn_camera->coordinates[0],
-        xgn_camera->coordinates[1],
-        xgn_camera->coordinates[2]
+        xgn_camera->transform.x,
+        xgn_camera->transform.y,
+        xgn_camera->transform.z
     );
-    osg::Vec3d center = eye + forward;
-    osg::Vec3d up(0, 0, 1); // Z-up
+    osg::Vec3d center = eye + osg::Vec3d(forward.x, forward.y, forward.z);
+    osg::Vec3d osg_up(up.x, up.y, up.z);
 
-    osg_camera->setViewMatrixAsLookAt(eye, center, up);
+    osg_camera->setViewMatrixAsLookAt(eye, center, osg_up);
 
     // Update projection matrix
     osg_camera->setProjectionMatrixAsPerspective(
@@ -295,7 +295,7 @@ void update_camera_position(xgn3D::camera*& xgn_camera, osg::Camera* osg_camera)
         xgn_camera->clip_end
     );
 
-    // Store the OSG camera reference (optional)
+    // Store the OSG camera reference
     xgn_camera->osg_camera = osg_camera;
 }
 
@@ -304,11 +304,12 @@ void update_objects(xgn::window*& window) {
         if (interface->interface_type == "3D") {
             auto scene = interface->scenes[interface->scene_in_use];
             for (auto*& obj : scene->objects_loaded) {
-                if (!obj->transform) continue;
+                if (!obj->osg_transform) continue;
+                
                 // Apply material properties
                 osg::StateSet* stateset = obj->loaded_stateset;
                 osg::Material* material = obj->loaded_material;
-                // Set material properties from xgn3D::material
+                
                 material->setAmbient(osg::Material::FRONT_AND_BACK, 
                     osg::Vec4(obj->obj_material.ambient[0],
                             obj->obj_material.ambient[1],
@@ -333,32 +334,30 @@ void update_objects(xgn::window*& window) {
                 material->setColorMode(osg::Material::AMBIENT_AND_DIFFUSE);
                 stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON); 
 
-                obj->transform->setPosition(osg::Vec3d(
-                    obj->coordinates[0],
-                    obj->coordinates[1],
-                    obj->coordinates[2]
+                // Update position using vec3D transform
+                obj->osg_transform->setPosition(osg::Vec3d(
+                    obj->transform.x,
+                    obj->transform.y,
+                    obj->transform.z
                 ));
                 
                 // Set rotation (convert degrees to radians)
                 osg::Quat rotation;
                 rotation.makeRotate(
-                    osg::DegreesToRadians(obj->rotation[1]), // yaw (Y)
+                    osg::DegreesToRadians(obj->transform.rotation_y), // yaw (Y)
                     osg::Vec3d(0,1,0),                     // yaw axis
-                    osg::DegreesToRadians(obj->rotation[0]), // pitch (X)
+                    osg::DegreesToRadians(obj->transform.rotation_x), // pitch (X)
                     osg::Vec3d(1,0,0),                     // pitch axis
-                    osg::DegreesToRadians(obj->rotation[2]), // roll (Z)
+                    osg::DegreesToRadians(obj->transform.rotation_z), // roll (Z)
                     osg::Vec3d(0,0,1)                       // roll axis
                 );
                 
-                obj->transform->setAttitude(rotation);
-
-                // stateset->setAttribute(material);
+                obj->osg_transform->setAttitude(rotation);
             }
         }
     }
 }
 
-// Startup OSG.
 // Startup OSG.
 window* setup_osg(window* win) {
     // 1. Create CompositeViewer and root node
@@ -411,7 +410,10 @@ window* setup_osg(window* win) {
         }
 
         win->viewer->addView(view);
+        interface->view = view;
     }
+
+    xgnUI::init_keyboard(win->interfaces[0]->view);
 
     return win;
 }

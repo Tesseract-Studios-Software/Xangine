@@ -17,6 +17,8 @@ int render_frame(window*& loading_window) {
         return -1;
     }
 
+    xgnUI::keys_pressed.clear();
+
     // Update objects
     update_objects(loading_window);
 

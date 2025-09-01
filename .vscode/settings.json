@@ -223,7 +223,8 @@
         "__availability": "cpp",
         "incrementalcompileoperation": "cpp",
         "material": "cpp",
-        "compositeviewer": "cpp"
+        "compositeviewer": "cpp",
+        "iomanip": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
