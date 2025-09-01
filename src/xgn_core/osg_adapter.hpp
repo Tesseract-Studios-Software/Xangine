@@ -126,27 +126,14 @@ void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::View> view
     
     // Convert degrees to radians
     double pitch = osg::DegreesToRadians(xgn_camera->transform.rotation_x);
-    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z);
+    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z); 
 
+    // Calculate forward direction for Z-up coordinate system
     xgn::vec3D forward;
-    forward.x = cos(yaw) * cos(pitch);
-    forward.y = sin(yaw) * cos(pitch);
-    forward.z = sin(pitch);
+    forward.x = std::cos(yaw) * std::cos(pitch);
+    forward.y = std::sin(yaw) * std::cos(pitch);
+    forward.z = std::sin(pitch);
     forward = forward.normalize();
-
-    // Calculate right vector (cross product of forward and world up)
-    xgn::vec3D right;
-    right.x = std::cos(yaw - 1.5708); // 90 degrees in radians
-    right.y = std::sin(yaw - 1.5708);
-    right.z = 0;
-    right = right.normalize();
-
-    // Calculate up vector (cross product of forward and right)
-    xgn::vec3D up;
-    up.x = forward.y * right.z - forward.z * right.y;
-    up.y = forward.z * right.x - forward.x * right.z;
-    up.z = forward.x * right.y - forward.y * right.x;
-    up = up.normalize();
 
     osg::Vec3d eye(xgn_camera->coordinates[0], xgn_camera->coordinates[1], xgn_camera->coordinates[2]);
     osg::Vec3d center = eye + forward;
@@ -253,28 +240,14 @@ void update_camera_position(xgn3D::camera*& xgn_camera, osg::Camera* osg_camera)
 
     // Convert degrees to radians
     double pitch = osg::DegreesToRadians(xgn_camera->transform.rotation_x);
-    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z);
+    double yaw = osg::DegreesToRadians(xgn_camera->transform.rotation_z); 
     
-    // Calculate forward direction using vec3D for Z-up coordinate system
+    // Calculate forward direction for Z-up coordinate system
     xgn::vec3D forward;
     forward.x = std::cos(yaw) * std::cos(pitch);
     forward.y = std::sin(yaw) * std::cos(pitch);
     forward.z = std::sin(pitch);
     forward = forward.normalize();
-
-    // Calculate right vector
-    xgn::vec3D right;
-    right.x = std::cos(yaw - 1.5708);
-    right.y = std::sin(yaw - 1.5708);
-    right.z = 0;
-    right = right.normalize();
-
-    // Calculate up vector
-    xgn::vec3D up;
-    up.x = forward.y * right.z - forward.z * right.y;
-    up.y = forward.z * right.x - forward.x * right.z;
-    up.z = forward.x * right.y - forward.y * right.x;
-    up = up.normalize();
 
     // Set view matrix
     osg::Vec3d eye(
@@ -283,9 +256,9 @@ void update_camera_position(xgn3D::camera*& xgn_camera, osg::Camera* osg_camera)
         xgn_camera->transform.z
     );
     osg::Vec3d center = eye + osg::Vec3d(forward.x, forward.y, forward.z);
-    osg::Vec3d osg_up(up.x, up.y, up.z);
+    osg::Vec3d up(0, 0, 1); // Z-up coordinate system
 
-    osg_camera->setViewMatrixAsLookAt(eye, center, osg_up);
+    osg_camera->setViewMatrixAsLookAt(eye, center, up);
 
     // Update projection matrix
     osg_camera->setProjectionMatrixAsPerspective(
@@ -358,6 +331,9 @@ void update_objects(xgn::window*& window) {
     }
 }
 
+int set_render_mode(osg::ref_ptr<osgViewer::View> view) {
+}
+
 // Startup OSG.
 window* setup_osg(window* win) {
     // 1. Create CompositeViewer and root node
@@ -375,6 +351,7 @@ window* setup_osg(window* win) {
     traits->doubleBuffer = true;
     traits->supportsResize = true;
     traits->windowName = win->name;   // Set window title here
+    traits->samples = 4;
 
     osg::ref_ptr<osg::GraphicsContext> gc = osg::GraphicsContext::createGraphicsContext(traits.get());
     if (!gc || !gc->valid()) {

@@ -7,7 +7,7 @@
 #include <xgn3D_object/object.hpp>
 #include <xgn_core/3D_data_loader.hpp>
 #include <xgn_core/osg_adapter.hpp>
-#include <xgn_renderer/renderer.hpp>
+#include <xgn_renderer/renderer_core.hpp>
 #include <vector>
 #include <libgen.h>
 #include <unistd.h>
