@@ -17,8 +17,9 @@ public:
 
     osg::ref_ptr<osg::Program> load_shader_program(
         const std::string& name,
-        const std::string& vertexFile,
-        const std::string& fragmentFile,
+        const std::string& engine_name,
+        const std::string& vertex_file,
+        const std::string& fragment_file,
         const std::vector<std::string>& defines = {}
     ) {
         std::string key = name;
@@ -33,12 +34,12 @@ public:
         osg::ref_ptr<osg::Program> program = new osg::Program;
         
         // Load vertex shader
-        std::string vertexPath = ResourcePaths::get_shader_path(vertexFile);
+        std::string vertexPath = ResourcePaths::get_shader_path(engine_name, vertex_file);
         osg::ref_ptr<osg::Shader> vertShader = osgDB::readShaderFile(osg::Shader::VERTEX, vertexPath);
         if (vertShader) program->addShader(vertShader);
 
         // Load fragment shader with optional defines
-        std::string fragmentPath = ResourcePaths::get_shader_path(fragmentFile);
+        std::string fragmentPath = ResourcePaths::get_shader_path(engine_name, fragment_file);
         osg::ref_ptr<osg::Shader> fragShader = osgDB::readShaderFile(osg::Shader::FRAGMENT, fragmentPath);
         if (fragShader) {
             if (!defines.empty()) {
