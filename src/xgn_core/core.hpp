@@ -8,6 +8,7 @@
 #include <xgn_core/3D_data_loader.hpp>
 #include <xgn_core/osg_adapter.hpp>
 #include <xgn_renderer/renderer_core.hpp>
+#include <xgn_renderer/render_engine_manager.hpp>
 #include <vector>
 #include <libgen.h>
 #include <unistd.h>
@@ -20,6 +21,34 @@ using namespace xgn3D;
 using namespace xgn;
 
 namespace xgn {
+
+class RenderSystem {
+public:
+    static RenderSystem& instance() {
+        static RenderSystem instance;
+        return instance;
+    }
+    
+    void initialize(osgViewer::Viewer* viewer) {
+        _engine_manager = std::make_unique<RenderEngineManager>(viewer);
+    }
+    
+    bool set_render_engine(const std::string& engineName, const EngineSettings& settings = EngineSettings()) {
+        if (_engine_manager) {
+            return _engine_manager->set_engine(engineName, settings);
+        }
+        return false;
+    }
+    
+    RenderEngineManager* get_engine_manager() { return _engine_manager.get(); }
+
+private:
+    std::unique_ptr<RenderEngineManager> _engine_manager;
+};
+
+class Core {
+
+public:
 
 // Outputs the corresponding string of the number.
 void code(const int& the_number) {
@@ -118,6 +147,8 @@ pair<int, float> frame(window*& window, int fps_limit) {
     }
     return {return_frame, 1.0 / elapsed_time};
 }
+
+};
 
 };
 
