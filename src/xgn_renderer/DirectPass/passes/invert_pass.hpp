@@ -1,38 +1,72 @@
 #pragma once
 #include <xgn_renderer/render_pass.hpp>
-#include <osgDB/ReadFile>
+#include <xgn_renderer/shader_manager.hpp>
 
-using namespace xgn;
+namespace xgn {
 
 class InvertPass : public RenderPass {
 public:
-    InvertPass() { _name = "InvertPass"; }
+    InvertPass() { 
+        _name = "InvertPass";
+        _output_texture = new osg::Texture2D;
+        _output_texture->setTextureSize(1024, 768);
+        _output_texture->setInternalFormat(GL_RGBA);
+    }
 
     osg::ref_ptr<osg::Camera> create_pass_camera() override {
-        // 1. Create the camera (as shown in previous examples)
         osg::ref_ptr<osg::Camera> camera = new osg::Camera;
         camera->setRenderOrder(osg::Camera::POST_RENDER);
-        camera->setClearMask(0); // Don't clear color buffer
-
-        // 3. **CRITICAL: Attach the specific shader for this pass**
-        osg::ref_ptr<osg::Program> program = new osg::Program;
-        program->addShader(osgDB::readShaderFile(osg::Shader::FRAGMENT, ""));
-
-        quad->getOrCreateStateSet()->setAttributeAndModes(program);
-
-        // 4. Set up input uniforms (e.g., bind the G-Buffer textures from a previous pass)
-        osg::StateSet* ss = quad->getStateSet();
-        ss->addUniform(new osg::Uniform("u_gBufferAlbedo", 0)); // Texture unit 0
-        ss->addUniform(new osg::Uniform("u_gBufferNormal", 1)); // Texture unit 1
-        // ... etc.
-
+        camera->setClearMask(0);
+        
+        // Create full-screen quad
+        osg::ref_ptr<osg::Geode> quad = create_fullscreen_quad();
         camera->addChild(quad);
+        
+        // Configure camera to render to texture
+        camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        camera->attach(osg::Camera::COLOR_BUFFER, _output_texture);
+        
         return camera;
     }
 
-    // This pass might render to a texture for the next pass to use
-    osg::ref_ptr<osg::Texture2D> getOutputTexture() const override { return _outputTexture; }
+    void apply_settings(const EngineSettings& settings) override {
+        _enabled = settings.get<bool>("invert.enabled", true);
+        // Add more settings as needed
+    }
+
+    void set_input_texture(int unit, osg::ref_ptr<osg::Texture2D> texture) override {
+        _input_texture = texture;
+        // This would be used in the shader
+    }
+
+    osg::ref_ptr<osg::Texture2D> get_output_texture() const override { 
+        return _output_texture; 
+    }
 
 private:
-    osg::ref_ptr<osg::Texture2D> _outputTexture;
+    osg::ref_ptr<osg::Geode> create_fullscreen_quad() {
+        osg::ref_ptr<osg::Geode> quadGeode = new osg::Geode;
+        osg::ref_ptr<osg::Geometry> quadGeometry = osg::createTexturedQuadGeometry(
+            osg::Vec3(-1, -1, 0), osg::Vec3(2, 0, 0), osg::Vec3(0, 2, 0));
+        
+        // Load shader
+        osg::ref_ptr<osg::Program> program = ShaderManager::instance().load_shader_program(
+            "Invert", "common.vert", "invert.frag");
+        
+        osg::StateSet* stateset = quadGeometry->getOrCreateStateSet();
+        stateset->setAttributeAndModes(program);
+        
+        // Set up uniforms
+        if (_input_texture) {
+            stateset->setTextureAttributeAndModes(0, _input_texture);
+            stateset->addUniform(new osg::Uniform("inputTexture", 0));
+        }
+        
+        quadGeode->addDrawable(quadGeometry);
+        return quadGeode;
+    }
+
+    osg::ref_ptr<osg::Texture2D> _input_texture;
 };
+
+} // namespace xgn

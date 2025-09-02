@@ -5,7 +5,7 @@
 #define OSG_ADAPT_HPP
 
 #include <xgn_log/log.hpp>
-#include <xgn_container/container.hpp>
+#include <xgn_window/window.hpp>
 #include <xgn3D_object/object.hpp>
 #include <xgn3D_camera/camera.hpp>
 #include <xgnUI_key/keyboard.hpp>

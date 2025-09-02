@@ -4,7 +4,6 @@
 #ifndef OBJECT_HPP
 #define OBJECT_HPP
 
-#include <xgn3D_datablock/datablock.hpp>
 #include <xgn3D_datablock/material.hpp>
 #include <xgn3D_datablock/mesh.hpp>
 #include <xgn_log/log.hpp>
