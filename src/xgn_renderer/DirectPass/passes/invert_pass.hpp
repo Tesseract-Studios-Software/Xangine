@@ -51,7 +51,7 @@ private:
         
         // Load shader
         osg::ref_ptr<osg::Program> program = ShaderManager::instance().load_shader_program(
-            "Invert", "common.vert", "invert.frag");
+            "Invert", engine_name, "common.vert", "invert.frag");
         
         osg::StateSet* stateset = quadGeometry->getOrCreateStateSet();
         stateset->setAttributeAndModes(program);
@@ -67,6 +67,7 @@ private:
     }
 
     osg::ref_ptr<osg::Texture2D> _input_texture;
+    string engine_name = "DirectPass";
 };
 
 } // namespace xgn

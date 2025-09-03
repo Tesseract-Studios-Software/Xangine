@@ -29,11 +29,11 @@ public:
         return instance;
     }
     
-    void initialize(osgViewer::Viewer* viewer) {
+    void initialize(osgViewer::CompositeViewer* viewer) {
         _engine_manager = std::make_unique<RenderEngineManager>(viewer);
     }
     
-    bool set_render_engine(const std::string& engineName, const EngineSettings& settings = EngineSettings()) {
+    bool set_render_engine(const std::string& engineName, EngineSettings*& settings) {
         if (_engine_manager) {
             return _engine_manager->set_engine(engineName, settings);
         }

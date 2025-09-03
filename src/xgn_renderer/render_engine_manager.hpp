@@ -2,27 +2,37 @@
 #include <xgn_renderer/render_engine_base.hpp>
 #include <xgn_renderer/DirectPass/core.hpp>
 #include <xgn_log/log.hpp>
+#include <xgn_resources/resource_paths.hpp>
 // #include <xgn_renderer/IFMQE/core.hpp>
 // #include <xgn_renderer/Hyperplane/core.hpp>
 #include <memory>
 #include <unordered_map>
+#include <fstream>
 
 namespace xgn {
 
 class RenderEngineManager {
 public:
     RenderEngineManager(osgViewer::Viewer* viewer) : _viewer(viewer) {
-        // Register available engines
         _engines["DirectPass"] = std::make_unique<DirectPass::DirectPassEngine>();
         // _engines["IFMQE"] = std::make_unique<IFMQE::HyperplaneEngine>();
         // _engines["Hyperplane"] = std::make_unique<Hyperplane::HyperplaneEngine>();
         
-        // Set default engine
-        _current_engine = "DirectPass";
+        // // Register available engines
+        // ifstream file(ResourcePaths::get_engines_list_path());
+        
+        // string line;
+
+        // for (getline(file, line)) {
+        //     _engines[line] = std::make_unique<DirectPass::DirectPassEngine>();
+        // }
+        
+        // // Set default engine
+        // _current_engine = "DirectPass";
     }
     
     // Set the active render engine
-    bool set_engine(const std::string& engineName, const EngineSettings& settings = EngineSettings()) {
+    bool set_engine(const std::string& engineName, EngineSettings*& settings) {
         if (_engines.find(engineName) == _engines.end()) {
             log("0x9010", 3, "Unknown render engine: " + engineName);
             return false;

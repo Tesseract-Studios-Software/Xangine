@@ -407,6 +407,16 @@ window* setup_osg(window* win) {
 
     xgnUI::init_keyboard(win->interfaces[0]->view);
 
+    // Initialize the render system
+    xgn::RenderSystem::instance().initialize(win->viewer);
+    
+    // Set the desired render engine with settings
+    EngineSettings* settings;
+    settings->set("directpass.invert.enabled", true);
+    settings->set("directpass.invert.intensity", 1.0f);
+    
+    xgn::RenderSystem::instance().set_render_engine("DirectPass", settings);
+
     return win;
 }
 
