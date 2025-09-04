@@ -14,29 +14,34 @@ public:
     }
 
     osg::ref_ptr<osg::Camera> create_pass_camera() override {
-        osg::ref_ptr<osg::Camera> camera = new osg::Camera;
-        camera->setRenderOrder(osg::Camera::POST_RENDER);
-        camera->setClearMask(0);
+        _pass_camera = new osg::Camera; // ← STORE THE CAMERA
+        _pass_camera->setRenderOrder(osg::Camera::POST_RENDER);
+        _pass_camera->setClearMask(0);
         
         // Create full-screen quad
         osg::ref_ptr<osg::Geode> quad = create_fullscreen_quad();
-        camera->addChild(quad);
+        _pass_camera->addChild(quad);
         
         // Configure camera to render to texture
-        camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-        camera->attach(osg::Camera::COLOR_BUFFER, _output_texture);
+        _pass_camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        _pass_camera->attach(osg::Camera::COLOR_BUFFER, _output_texture);
         
-        return camera;
+        return _pass_camera;
     }
+
+    // Now get_pass_camera() will work automatically from the base class
+    // since we stored it in _pass_camera
 
     void apply_settings(const EngineSettings& settings) override {
         _enabled = settings.get<bool>("invert.enabled", true);
-        // Add more settings as needed
+        // Show/hide the camera based on enabled state
+        if (_pass_camera) {
+            _pass_camera->setNodeMask(_enabled ? 0xFFFFFFFF : 0x0);
+        }
     }
 
     void set_input_texture(int unit, osg::ref_ptr<osg::Texture2D> texture) override {
         _input_texture = texture;
-        // This would be used in the shader
     }
 
     osg::ref_ptr<osg::Texture2D> get_output_texture() const override { 
@@ -51,7 +56,7 @@ private:
         
         // Load shader
         osg::ref_ptr<osg::Program> program = ShaderManager::instance().load_shader_program(
-            "Invert", engine_name, "common.vert", "invert.frag");
+            "Invert", "DirectPass", "common.vert", "invert.frag");
         
         osg::StateSet* stateset = quadGeometry->getOrCreateStateSet();
         stateset->setAttributeAndModes(program);
@@ -67,7 +72,6 @@ private:
     }
 
     osg::ref_ptr<osg::Texture2D> _input_texture;
-    string engine_name = "DirectPass";
 };
 
 } // namespace xgn

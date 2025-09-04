@@ -7,8 +7,8 @@ namespace xgn {
 class RenderEngineBase {
 public:
     virtual ~RenderEngineBase() = default;
-    
-    virtual void setup_passes(osgViewer::Viewer* viewer, const EngineSettings& settings) = 0;
+
+    virtual void setup_passes(osgViewer::View* view, const EngineSettings& settings) = 0;
     virtual void update_settings(const EngineSettings& settings) = 0;
     virtual void toggle_pass(const std::string& passName, bool enabled) = 0;
     virtual const std::string& get_name() const = 0;

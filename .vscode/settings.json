@@ -226,7 +226,8 @@
         "compositeviewer": "cpp",
         "iomanip": "cpp",
         "scissor": "cpp",
-        "window": "cpp"
+        "window": "cpp",
+        "texture2d": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

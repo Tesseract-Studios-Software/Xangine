@@ -1,14 +1,18 @@
 #pragma once
 #include <xgn_renderer/render_engine_base.hpp>
 #include <xgn_renderer/DirectPass/passes/invert_pass.hpp>
+#include <osgViewer/Viewer>
 
 namespace DirectPass {
 
 class DirectPassEngine : public xgn::RenderEngineBase {
 public:
-    void setup_passes(osgViewer::Viewer* viewer, const EngineSettings& settings) override {
-        _viewer = viewer;
+    void setup_passes(osgViewer::View* view, const EngineSettings& settings) override {
+        _viewer = view;
         _settings = settings;
+        
+        // Clear any existing passes
+        cleanup_passes();
         
         if (settings.get<bool>("directpass.invert.enabled", false)) {
             add_invert_pass();
@@ -26,8 +30,9 @@ public:
         for (auto& pass : _passes) {
             if (pass->get_name() == passName) {
                 pass->set_enabled(enabled);
-                // Show/hide the pass camera
-                pass->get_pass_camera()->setNodeMask(enabled ? 0xFFFFFFFF : 0x0);
+                if (pass->get_pass_camera()) {
+                    pass->get_pass_camera()->setNodeMask(enabled ? 0xFFFFFFFF : 0x0);
+                }
                 break;
             }
         }
@@ -44,7 +49,9 @@ public:
     void remove_pass(const std::string& passName) override {
         for (auto it = _passes.begin(); it != _passes.end(); ++it) {
             if ((*it)->get_name() == passName) {
-                _viewer->getSceneData()->asGroup()->removeChild((*it)->get_pass_camera());
+                if ((*it)->get_pass_camera()) {
+                    _viewer->getSceneData()->asGroup()->removeChild((*it)->get_pass_camera());
+                }
                 _passes.erase(it);
                 break;
             }
@@ -62,6 +69,15 @@ private:
         _passes.push_back(_invert_pass);
     }
     
+    void cleanup_passes() {
+        for (auto& pass : _passes) {
+            if (pass->get_pass_camera()) {
+                _viewer->getSceneData()->asGroup()->removeChild(pass->get_pass_camera());
+            }
+        }
+        _passes.clear();
+    }
+    
     bool has_pass(const std::string& passName) {
         for (const auto& pass : _passes) {
             if (pass->get_name() == passName) return true;
@@ -69,7 +85,7 @@ private:
         return false;
     }
 
-    osgViewer::Viewer* _viewer = nullptr;
+    osgViewer::View* _viewer;
     EngineSettings _settings;
     std::vector<osg::ref_ptr<xgn::RenderPass>> _passes;
     osg::ref_ptr<xgn::InvertPass> _invert_pass;

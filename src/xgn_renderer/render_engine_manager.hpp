@@ -13,11 +13,11 @@ namespace xgn {
 
 class RenderEngineManager {
 public:
-    RenderEngineManager(osgViewer::Viewer* viewer) : _viewer(viewer) {
+    RenderEngineManager(osgViewer::View* view) : _view(view) {
         _engines["DirectPass"] = std::make_unique<DirectPass::DirectPassEngine>();
         // _engines["IFMQE"] = std::make_unique<IFMQE::HyperplaneEngine>();
         // _engines["Hyperplane"] = std::make_unique<Hyperplane::HyperplaneEngine>();
-        
+
         // // Register available engines
         // ifstream file(ResourcePaths::get_engines_list_path());
         
@@ -32,7 +32,7 @@ public:
     }
     
     // Set the active render engine
-    bool set_engine(const std::string& engineName, EngineSettings*& settings) {
+    bool set_engine(const std::string& engineName, EngineSettings& settings) {
         if (_engines.find(engineName) == _engines.end()) {
             log("0x9010", 3, "Unknown render engine: " + engineName);
             return false;
@@ -44,7 +44,7 @@ public:
         }
         
         // Setup new engine
-        _engines[engineName]->setup_passes(_viewer, settings);
+        _engines[engineName]->setup_passes(_view, settings);
         _current_engine = engineName;
         
         log("0x3008", 0, "Render engine set to: " + engineName);
@@ -81,12 +81,10 @@ public:
 
 private:
     void cleanup_engine_passes(const std::string& engineName) {
-        // This would remove all pass cameras from the scene
-        // For simplicity, we're letting each engine handle its own cleanup
-        // when setup_passes is called again
+        
     }
 
-    osgViewer::Viewer* _viewer;
+    osgViewer::View* _view;
     std::string _current_engine;
     std::unordered_map<std::string, std::unique_ptr<RenderEngineBase>> _engines;
 };
