@@ -70,37 +70,47 @@ private:
         // Get the main camera
         osg::Camera* mainCamera = _view->getCamera();
         
-        // Create two textures for ping-pong rendering
-        osg::ref_ptr<osg::Texture2D> textureA = new osg::Texture2D;
-        osg::ref_ptr<osg::Texture2D> textureB = new osg::Texture2D;
+        // Create texture for main camera to render to
+        osg::ref_ptr<osg::Texture2D> mainRenderTexture = new osg::Texture2D;
+        mainRenderTexture->setTextureSize(mainCamera->getViewport()->width(), 
+                                        mainCamera->getViewport()->height());
+        mainRenderTexture->setInternalFormat(GL_RGBA);
+        mainRenderTexture->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
+        mainRenderTexture->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
+        mainRenderTexture->setWrap(osg::Texture2D::WRAP_S, osg::Texture2D::CLAMP_TO_EDGE);
+        mainRenderTexture->setWrap(osg::Texture2D::WRAP_T, osg::Texture2D::CLAMP_TO_EDGE);
         
-        // Initialize both textures
-        int width = mainCamera->getViewport()->width();
-        int height = mainCamera->getViewport()->height();
-        
-        textureA->setTextureSize(width, height);
-        textureB->setTextureSize(width, height);
-        textureA->setInternalFormat(GL_RGBA);
-        textureB->setInternalFormat(GL_RGBA);
-        
-        // Configure main camera to render to texture A
+        // Configure main camera to render to texture
         mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-        mainCamera->attach(osg::Camera::COLOR_BUFFER, textureA);
+        mainCamera->attach(osg::Camera::COLOR_BUFFER, mainRenderTexture);
         
-        // Create invert pass that reads from texture A and renders to screen
+        // Ensure main camera still clears the buffers
+        mainCamera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        mainCamera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+        
+        // Now create the invert pass
         _invert_pass = new xgn::InvertPass();
-        _invert_pass->set_input_texture(0, textureA); // Read from texture A
+        _invert_pass->set_input_texture(0, mainRenderTexture);
         _invert_pass->apply_settings(_settings);
         
         osg::ref_ptr<osg::Camera> invert_camera = _invert_pass->create_pass_camera();
         
-        // Invert pass renders to screen
-        invert_camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
-        invert_camera->setClearMask(0);
-        
-        _view->getSceneData()->asGroup()->addChild(invert_camera);
+        // Add the invert camera as a child of the main camera's parent
+        // This ensures it's in the scene graph but not confused with the main camera
+        osg::Group* root = dynamic_cast<osg::Group*>(_view->getSceneData());
+        if (root) {
+            root->addChild(invert_camera);
+        } else {
+            // Fallback: add to main camera's parent
+            osg::Group* newRoot = new osg::Group;
+            newRoot->addChild(_view->getSceneData());
+            newRoot->addChild(invert_camera);
+            _view->setSceneData(newRoot);
+        }
         
         _passes.push_back(_invert_pass);
+        
+        log("0x9031", 1, "Invert pass setup complete");
     }
     
     void cleanup_passes() {

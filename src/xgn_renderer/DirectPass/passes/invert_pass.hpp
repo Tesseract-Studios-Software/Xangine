@@ -16,6 +16,11 @@ public:
     osg::ref_ptr<osg::Camera> create_pass_camera() override {
         _pass_camera = new osg::Camera;
         
+        // Clearly identify this as a post-processing camera
+        _pass_camera->setName("InvertPassCamera");
+        _pass_camera->setAllowEventFocus(false);  // Don't handle events
+        _pass_camera->setCullingActive(false);    // Don't perform culling
+        
         // Set render order to POST_RENDER (after main scene)
         _pass_camera->setRenderOrder(osg::Camera::POST_RENDER);
         

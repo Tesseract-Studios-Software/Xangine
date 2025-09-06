@@ -120,6 +120,13 @@ inline osg::ref_ptr<osg::Group> load_object_osg(xgn3D::object*& load_obj, osg::r
 void setup_camera(xgn3D::camera*& xgn_camera, osg::ref_ptr<osgViewer::View> viewer) {
     log("0x3004", 0);
     osg::Camera* cam = viewer->getCamera();
+
+    cam->setName("MainCamera");
+    cam->setAllowEventFocus(true);
+    cam->setCullingActive(true);
+
+    cam->setRenderOrder(osg::Camera::NESTED_RENDER);
+
     cam->setClearColor(osg::Vec4(
         xgn_camera->background_colour[0], 
         xgn_camera->background_colour[1], 
