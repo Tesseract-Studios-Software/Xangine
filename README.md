@@ -13,5 +13,5 @@ OpenSceneGraph License: `/OSG-LICENSE.txt`
 https://sites.google.com/view/xangine/docs
 
 ##
-Xangine is licensed under MIT License
+Xangine is licensed under MIT License  
 Copyright (c) 2025 Tesseract Studios
