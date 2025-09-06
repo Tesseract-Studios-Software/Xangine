@@ -24,14 +24,15 @@ static std::string get_shader_path(const std::string& engine_name, const std::st
 
     // Try multiple possible locations
     const std::vector<std::string> possible_paths = {
-        "./" + picked_location + engine_name + "/shaders/" + shader_name,
-        "../" + picked_location + engine_name + "/shaders/" + shader_name,
-        "../../" + picked_location + engine_name + "/shaders/" + shader_name
+        "." + picked_location + engine_name + "/shaders/" + shader_name,
+        ".." + picked_location + engine_name + "/shaders/" + shader_name,
+        "../.." + picked_location + engine_name + "/shaders/" + shader_name
     };
 
     
     for (const auto& path : possible_paths) {
         if (osgDB::fileExists(path)) {
+            cout << "Resource found at " << path << endl;
             return path;
         }
     }

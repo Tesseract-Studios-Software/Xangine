@@ -382,11 +382,11 @@ window* setup_osg(window* win) {
 
     // Create views for each interface and assign cameras
     for (auto* interface : win->interfaces) {
-        osg::ref_ptr<osgViewer::View> view = new osgViewer::View;
-        view->setSceneData(root);  // Link root to the view
+        interface->view = new osgViewer::View;
+        interface->view->setSceneData(root);  // Link root to the view
 
         // Configure camera viewport (matches interface dimensions)
-        osg::Camera* camera = view->getCamera();
+        osg::Camera* camera = interface->view->getCamera();
         camera->setGraphicsContext(gc);
         camera->setViewport(
             interface->coordinates_on_screen_x,
@@ -399,22 +399,26 @@ window* setup_osg(window* win) {
         if (interface->scenes.size() > 0) {
             auto* scene = interface->scenes[interface->scene_in_use];
             if (scene->main_camera) {
-                setup_camera(scene->main_camera, view);  // Pass the view, not the interface's viewer
+                setup_camera(scene->main_camera, interface->view);  // Pass the view, not the interface's viewer
             }
         }
 
         // Initialize the render system
         xgn::RenderSystem::instance().initialize(interface->view);
-        
+
         // Set the desired render engine with settings
         EngineSettings settings;
-        settings.set("directpass.invert.enabled", false);
+        settings.set("directpass.invert.enabled", true);
         settings.set("directpass.invert.intensity", 1.0f);
-        
+
         xgn::RenderSystem::instance().set_render_engine("DirectPass", settings);
 
-        win->viewer->addView(view);
-        interface->view = view;
+        // Ensure the invert pass is properly configured
+        if (auto* engine = xgn::RenderSystem::instance().get_current_engine()) {
+            engine->toggle_pass("InvertPass", true);
+        }
+
+        win->viewer->addView(interface->view);
     }
 
     xgnUI::init_keyboard(win->interfaces[0]->view);

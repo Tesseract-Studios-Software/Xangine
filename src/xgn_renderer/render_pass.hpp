@@ -25,7 +25,7 @@ protected:
     std::string _name;
     bool _enabled = true;
     osg::ref_ptr<osg::Texture2D> _output_texture;
-    osg::ref_ptr<osg::Camera> _pass_camera; // ← ADD THIS MEMBER VARIABLE
+    osg::ref_ptr<osg::Camera> _pass_camera;
 };
 
 } // namespace xgn

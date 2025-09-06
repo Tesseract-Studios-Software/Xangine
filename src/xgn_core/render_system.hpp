@@ -24,7 +24,6 @@ public:
         return false;
     }
     
-    // NEW: Method to update settings for current engine
     void update_engine_settings(EngineSettings& settings) {
         if (_engine_manager) {
             _engine_manager->update_settings(settings);
