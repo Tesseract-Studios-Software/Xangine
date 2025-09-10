@@ -148,6 +148,42 @@ struct local_vec3D {
     }
 };
 
+// Transform a point from parent's local space to world space
+vec3D calculate_parent(const vec3D& parent, const vec3D& local_offset) {
+    // Convert parent rotation to radians
+    double pitch = degrees_to_radians(parent.rotation_x);
+    double yaw = degrees_to_radians(parent.rotation_z);
+    double roll = degrees_to_radians(parent.rotation_y);
+    
+    // Create rotation matrix
+    double cosPitch = cos(pitch);
+    double sinPitch = sin(pitch);
+    double cosYaw = cos(yaw);
+    double sinYaw = sin(yaw);
+    double cosRoll = cos(roll);
+    double sinRoll = sin(roll);
+    
+    // Create rotation matrix (simplified)
+    double matrix[3][3] = {
+        {cosYaw * cosRoll, -cosYaw * sinRoll, sinYaw},
+        {sinPitch * sinYaw * cosRoll + cosPitch * sinRoll, -sinPitch * sinYaw * sinRoll + cosPitch * cosRoll, -sinPitch * cosYaw},
+        {-cosPitch * sinYaw * cosRoll + sinPitch * sinRoll, cosPitch * sinYaw * sinRoll + sinPitch * cosRoll, cosPitch * cosYaw}
+    };
+    
+    // Transform local offset using rotation matrix
+    vec3D world_pos;
+    world_pos.x = parent.x + matrix[0][0] * local_offset.x + matrix[0][1] * local_offset.y + matrix[0][2] * local_offset.z;
+    world_pos.y = parent.y + matrix[1][0] * local_offset.x + matrix[1][1] * local_offset.y + matrix[1][2] * local_offset.z;
+    world_pos.z = parent.z + matrix[2][0] * local_offset.x + matrix[2][1] * local_offset.y + matrix[2][2] * local_offset.z;
+    
+    // Keep the original rotations
+    world_pos.rotation_x = parent.rotation_x;
+    world_pos.rotation_y = parent.rotation_y;
+    world_pos.rotation_z = parent.rotation_z;
+    
+    return world_pos;
+}
+
 } // namespace xgn
 
 #endif // VECTOR3D_HPP

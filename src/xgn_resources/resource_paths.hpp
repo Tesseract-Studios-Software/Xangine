@@ -32,7 +32,6 @@ static std::string get_shader_path(const std::string& engine_name, const std::st
     
     for (const auto& path : possible_paths) {
         if (osgDB::fileExists(path)) {
-            cout << "Resource found at " << path << endl;
             return path;
         }
     }

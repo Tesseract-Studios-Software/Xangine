@@ -10,14 +10,23 @@ namespace DirectPass {
 class DirectPassEngine : public xgn::RenderEngineBase {
 public:
     void setup_passes(osgViewer::View* view, const EngineSettings& settings) override {
-        _view = view;  // Store the view reference
+        _view = view;
         _settings = settings;
+        
+        // Store original camera settings
+        if (_view && _view->getCamera()) {
+            _originalClearColor = _view->getCamera()->getClearColor();
+            _originalClearMask = _view->getCamera()->getClearMask();
+        }
         
         // Clear any existing passes
         cleanup_passes();
         
         if (settings.get<bool>("directpass.invert.enabled", false)) {
             add_invert_pass();
+            enable_post_processing();
+        } else {
+            enable_direct_rendering();
         }
     }
     
@@ -29,16 +38,25 @@ public:
     }
     
     void toggle_pass(const std::string& passName, bool enabled) override {
-        for (auto& pass : _passes) {
-            if (pass->get_name() == passName) {
-                pass->set_enabled(enabled);
-                if (pass->get_pass_camera()) {
-                    pass->get_pass_camera()->setNodeMask(enabled ? 0xFFFFFFFF : 0x0);
+    for (auto& pass : _passes) {
+        if (pass->get_name() == passName) {
+            pass->set_enabled(enabled);
+            
+            if (passName == "InvertPass") {
+                if (enabled) {
+                    enable_post_processing();
+                } else {
+                    enable_direct_rendering();
                 }
-                break;
             }
+            
+            if (pass->get_pass_camera()) {
+                pass->get_pass_camera()->setNodeMask(enabled ? 0xFFFFFFFF : 0x0);
+            }
+            break;
         }
     }
+}
     
     const std::string& get_name() const override { return "DirectPass"; }
     
@@ -60,6 +78,37 @@ public:
         }
     }
 
+    void enable_direct_rendering() {
+        if (!_view || !_view->getCamera()) return;
+        
+        osg::Camera* mainCamera = _view->getCamera();
+        
+        // Restore original rendering to screen
+        mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+        mainCamera->setClearColor(_originalClearColor);
+        mainCamera->setClearMask(_originalClearMask);
+        
+        // Disable invert pass camera
+        if (_invert_pass && _invert_pass->get_pass_camera()) {
+            _invert_pass->get_pass_camera()->setNodeMask(0x0);
+        }
+    }
+
+    void enable_post_processing() {
+        if (!_view || !_view->getCamera()) return;
+        
+        osg::Camera* mainCamera = _view->getCamera();
+        
+        // Configure main camera to render to texture
+        mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        mainCamera->attach(osg::Camera::COLOR_BUFFER, _mainRenderTexture);
+        
+        // Enable invert pass camera
+        if (_invert_pass && _invert_pass->get_pass_camera()) {
+            _invert_pass->get_pass_camera()->setNodeMask(0xFFFFFFFF);
+        }
+    }
+
 private:
     void add_invert_pass() {
         if (!_view || !_view->getCamera()) {
@@ -70,43 +119,36 @@ private:
         // Get the main camera
         osg::Camera* mainCamera = _view->getCamera();
         
+        // Store the original clear color and mask
+        _originalClearColor = mainCamera->getClearColor();
+        _originalClearMask = mainCamera->getClearMask();
+        
         // Create texture for main camera to render to
-        osg::ref_ptr<osg::Texture2D> mainRenderTexture = new osg::Texture2D;
-        mainRenderTexture->setTextureSize(mainCamera->getViewport()->width(), 
+        _mainRenderTexture = new osg::Texture2D;
+        _mainRenderTexture->setTextureSize(mainCamera->getViewport()->width(), 
                                         mainCamera->getViewport()->height());
-        mainRenderTexture->setInternalFormat(GL_RGBA);
-        mainRenderTexture->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
-        mainRenderTexture->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
-        mainRenderTexture->setWrap(osg::Texture2D::WRAP_S, osg::Texture2D::CLAMP_TO_EDGE);
-        mainRenderTexture->setWrap(osg::Texture2D::WRAP_T, osg::Texture2D::CLAMP_TO_EDGE);
+        _mainRenderTexture->setInternalFormat(GL_RGBA);
+        _mainRenderTexture->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
+        _mainRenderTexture->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
+        _mainRenderTexture->setWrap(osg::Texture2D::WRAP_S, osg::Texture2D::CLAMP_TO_EDGE);
+        _mainRenderTexture->setWrap(osg::Texture2D::WRAP_T, osg::Texture2D::CLAMP_TO_EDGE);
         
         // Configure main camera to render to texture
         mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-        mainCamera->attach(osg::Camera::COLOR_BUFFER, mainRenderTexture);
-        
-        // Ensure main camera still clears the buffers
-        mainCamera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        mainCamera->setClearColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
+        mainCamera->attach(osg::Camera::COLOR_BUFFER, _mainRenderTexture);
         
         // Now create the invert pass
         _invert_pass = new xgn::InvertPass();
-        _invert_pass->set_input_texture(0, mainRenderTexture);
+        _invert_pass->set_input_texture(0, _mainRenderTexture);
         _invert_pass->apply_settings(_settings);
         
         osg::ref_ptr<osg::Camera> invert_camera = _invert_pass->create_pass_camera();
         
-        // Add the invert camera as a child of the main camera's parent
-        // This ensures it's in the scene graph but not confused with the main camera
-        osg::Group* root = dynamic_cast<osg::Group*>(_view->getSceneData());
-        if (root) {
-            root->addChild(invert_camera);
-        } else {
-            // Fallback: add to main camera's parent
-            osg::Group* newRoot = new osg::Group;
-            newRoot->addChild(_view->getSceneData());
-            newRoot->addChild(invert_camera);
-            _view->setSceneData(newRoot);
-        }
+        // Configure invert camera to render to screen
+        invert_camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
+        invert_camera->setClearMask(0); // Don't clear, we're compositing
+        
+        _view->getSceneData()->asGroup()->addChild(invert_camera);
         
         _passes.push_back(_invert_pass);
         
@@ -129,6 +171,9 @@ private:
         return false;
     }
 
+    osg::Vec4 _originalClearColor;
+    GLbitfield _originalClearMask;
+    osg::ref_ptr<osg::Texture2D> _mainRenderTexture;
     osgViewer::View* _view = nullptr;
     EngineSettings _settings;
     std::vector<osg::ref_ptr<xgn::RenderPass>> _passes;
