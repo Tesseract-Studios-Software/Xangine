@@ -111,16 +111,18 @@ static void init(window* default_window) {
     check_xangine_instance(default_window);
 }
 
-// Render the next frame. FPS limit can be ajusted to infinite if it is set to 0.
+// Render the next frame. FPS limit can be ajusted to infinite if it is set to 0 (NOT SUGGESTED).
 static pair<int, float> frame(window*& window, int fps_limit) {
     clock_t start_time = clock();
     int return_frame = render_frame(window);
     clock_t end_time = clock();
     double elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
-    if (fps_limit != 0 && elapsed_time < 1.0 / fps_limit) {
-        usleep((1.0 / fps_limit - elapsed_time) * 1000000);
-        end_time = clock();
-        elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+    if (fps_limit != 0) {
+        if (elapsed_time < 1.0 / fps_limit) {
+            usleep((1.0 / fps_limit - elapsed_time) * CLOCKS_PER_SEC);
+            end_time = clock();
+            elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+        }
     }
     return {return_frame, 1.0 / elapsed_time};
 }
