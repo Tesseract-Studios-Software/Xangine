@@ -116,43 +116,64 @@ private:
             return;
         }
         
-        // Get the main camera
+        // Get the main camera and scene data
         osg::Camera* mainCamera = _view->getCamera();
+        osg::Node* sceneData = _view->getSceneData();
         
-        // Store the original clear color and mask
-        _originalClearColor = mainCamera->getClearColor();
-        _originalClearMask = mainCamera->getClearMask();
+        if (!sceneData) {
+            log("0x9032", 3, "No scene data available for invert pass");
+            return;
+        }
+        
+        int width = mainCamera->getViewport()->width();
+        int height = mainCamera->getViewport()->height();
         
         // Create texture for main camera to render to
         _mainRenderTexture = new osg::Texture2D;
-        _mainRenderTexture->setTextureSize(mainCamera->getViewport()->width(), 
-                                        mainCamera->getViewport()->height());
+        _mainRenderTexture->setTextureSize(width, height);
         _mainRenderTexture->setInternalFormat(GL_RGBA);
         _mainRenderTexture->setFilter(osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR);
         _mainRenderTexture->setFilter(osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR);
         _mainRenderTexture->setWrap(osg::Texture2D::WRAP_S, osg::Texture2D::CLAMP_TO_EDGE);
         _mainRenderTexture->setWrap(osg::Texture2D::WRAP_T, osg::Texture2D::CLAMP_TO_EDGE);
         
-        // Configure main camera to render to texture
-        mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
-        mainCamera->attach(osg::Camera::COLOR_BUFFER, _mainRenderTexture);
+        // Store original camera settings
+        _originalClearColor = mainCamera->getClearColor();
+        _originalClearMask = mainCamera->getClearMask();
         
-        // Now create the invert pass
+        // Configure main camera for FBO rendering
+        mainCamera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER_OBJECT);
+        mainCamera->setRenderOrder(osg::Camera::PRE_RENDER);
+        
+        // CORRECT WAY: Attach color buffer only, let OSG handle depth internally
+        mainCamera->attach(osg::Camera::COLOR_BUFFER, _mainRenderTexture.get());
+        
+        // Don't attach depth buffer separately - OSG will create one automatically
+        // mainCamera->attach(osg::Camera::DEPTH_BUFFER); // This would create a depth buffer
+        
+        // Ensure main camera still renders the scene properly
+        mainCamera->setClearColor(osg::Vec4(0.9f, 0.9f, 1.0f, 1.0f));
+        mainCamera->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        log("0x9031", 1, "Main camera FBO setup complete");
+        
+        // Create the invert pass
         _invert_pass = new xgn::InvertPass();
         _invert_pass->set_input_texture(0, _mainRenderTexture);
         _invert_pass->apply_settings(_settings);
         
         osg::ref_ptr<osg::Camera> invert_camera = _invert_pass->create_pass_camera();
         
-        // Configure invert camera to render to screen
-        invert_camera->setRenderTargetImplementation(osg::Camera::FRAME_BUFFER);
-        invert_camera->setClearMask(0); // Don't clear, we're compositing
-        
-        _view->getSceneData()->asGroup()->addChild(invert_camera);
+        // Add invert camera to the scene
+        osg::Group* rootGroup = dynamic_cast<osg::Group*>(sceneData);
+        if (!rootGroup) {
+            rootGroup = new osg::Group;
+            rootGroup->addChild(sceneData);
+            _view->setSceneData(rootGroup);
+        }
+        rootGroup->addChild(invert_camera);
         
         _passes.push_back(_invert_pass);
-        
-        log("0x9031", 1, "Invert pass setup complete");
     }
     
     void cleanup_passes() {
