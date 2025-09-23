@@ -224,7 +224,10 @@
         "incrementalcompileoperation": "cpp",
         "material": "cpp",
         "compositeviewer": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "scissor": "cpp",
+        "window": "cpp",
+        "texture2d": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

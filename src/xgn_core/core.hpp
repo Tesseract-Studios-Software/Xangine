@@ -7,7 +7,9 @@
 #include <xgn3D_object/object.hpp>
 #include <xgn_core/3D_data_loader.hpp>
 #include <xgn_core/osg_adapter.hpp>
-#include <xgn_renderer/renderer.hpp>
+#include <xgn_renderer/renderer_core.hpp>
+#include <xgn_renderer/render_engine_manager.hpp>
+#include <xgn_core/render_system.hpp>
 #include <vector>
 #include <libgen.h>
 #include <unistd.h>
@@ -21,8 +23,12 @@ using namespace xgn;
 
 namespace xgn {
 
+class Core {
+
+public:
+
 // Outputs the corresponding string of the number.
-void code(const int& the_number) {
+static void code(const int& the_number) {
     if (the_number == 0) {
         log("0xffff", 5);
     } else if (the_number == 1) {
@@ -37,7 +43,7 @@ void code(const int& the_number) {
 }
 
 // Sets executable path to the current working directory.
-void set_executable_dir() {
+static void set_executable_dir() {
     string exe_dir;
     string dir;
     char path[1024];
@@ -61,26 +67,26 @@ void set_executable_dir() {
 }
 
 // This loads all objects in an interface, it is not suggested to call this repeatively or else it may cause lag.
-vector<xgn3D::object*> load_all_objects(interface*& loading_interface) {
+static vector<xgn3D::object*> load_all_objects(interface*& loading_interface) {
     return xgn::load_all_data(loading_interface);
 }
 
 // This loads the object inputted as the argument.
-inline xgn3D::object* load_object(object*& loading_object) {
+static inline xgn3D::object* load_object(object*& loading_object) {
     return load_data(loading_object);
 }
 
 // This loads all objects in an interface, it is not suggested to call this repeatively or else it may cause lag.
-vector<xgn3D::object*> load_all_objects(interface* loading_interface) {
+static vector<xgn3D::object*> load_all_objects(interface* loading_interface) {
     return xgn::load_all_data(loading_interface);
 }
 
 // This loads the object inputted as the argument.
-xgn3D::object* load_object(object* loading_object) {
+static xgn3D::object* load_object(object* loading_object) {
     return load_data(loading_object);
 }
 
-int check_xangine_instance(window* default_window) {
+static int check_xangine_instance(window* default_window) {
     if (!default_window->root || !default_window->viewer) {
         log("0xd000", 5);
         return -1;
@@ -91,7 +97,7 @@ int check_xangine_instance(window* default_window) {
 }
 
 // Initialise Xangine instance.
-void init(window* default_window) {
+static void init(window* default_window) {
     int i;
     for (i = 0; i < default_window->interfaces.size(); i++) {
         default_window->interfaces[i]->scenes[
@@ -105,19 +111,23 @@ void init(window* default_window) {
     check_xangine_instance(default_window);
 }
 
-// Render the next frame. FPS limit can be ajusted to infinite if it is set to 0.
-pair<int, float> frame(window*& window, int fps_limit) {
+// Render the next frame. FPS limit can be ajusted to infinite if it is set to 0 (NOT SUGGESTED).
+static pair<int, float> frame(window*& window, int fps_limit) {
     clock_t start_time = clock();
     int return_frame = render_frame(window);
     clock_t end_time = clock();
     double elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
-    if (fps_limit != 0 && elapsed_time < 1.0 / fps_limit) {
-        usleep((1.0 / fps_limit - elapsed_time) * 1000000);
-        end_time = clock();
-        elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+    if (fps_limit != 0) {
+        if (elapsed_time < 1.0 / fps_limit) {
+            usleep((1.0 / fps_limit - elapsed_time) * CLOCKS_PER_SEC);
+            end_time = clock();
+            elapsed_time = double(end_time - start_time) / CLOCKS_PER_SEC;
+        }
     }
     return {return_frame, 1.0 / elapsed_time};
 }
+
+};
 
 };
 

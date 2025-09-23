@@ -5,10 +5,12 @@
 #define OSG_ADAPT_HPP
 
 #include <xgn_log/log.hpp>
-#include <xgn_container/container.hpp>
+#include <xgn_window/window.hpp>
 #include <xgn3D_object/object.hpp>
 #include <xgn3D_camera/camera.hpp>
 #include <xgnUI_key/keyboard.hpp>
+#include <xgn_renderer/render_engine_base.hpp>
+#include <xgn_core/render_system.hpp>
 #include <osgViewer/Viewer>
 #include <osg/ShapeDrawable>
 #include <osg/Drawable>
@@ -359,12 +361,12 @@ void update_objects(xgn::window*& window) {
 
 // Startup OSG.
 window* setup_osg(window* win) {
-    // 1. Create CompositeViewer and root node
+    // Create CompositeViewer and root node
     win->viewer = new osgViewer::CompositeViewer;
     osg::ref_ptr<osg::Group> root = setup_root();
     win->root = root;
 
-    // 2. Configure graphics context (critical for window title and rendering)
+    // Configure graphics context (critical for window title and rendering)
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
     traits->x = win->screen_x;
     traits->y = win->screen_y;
@@ -382,16 +384,16 @@ window* setup_osg(window* win) {
     }
     gc->realize();  // Activate the context
 
-    // 3. Load objects into the root node
+    // Load objects into the root node
     setup_objects(root, win);  // Must be called before creating views!
 
-    // 4. Create views for each interface and assign cameras
+    // Create views for each interface and assign cameras
     for (auto* interface : win->interfaces) {
-        osg::ref_ptr<osgViewer::View> view = new osgViewer::View;
-        view->setSceneData(root);  // Link root to the view
+        interface->view = new osgViewer::View;
+        interface->view->setSceneData(root);  // Link root to the view
 
         // Configure camera viewport (matches interface dimensions)
-        osg::Camera* camera = view->getCamera();
+        osg::Camera* camera = interface->view->getCamera();
         camera->setGraphicsContext(gc);
         camera->setViewport(
             interface->coordinates_on_screen_x,
@@ -404,12 +406,26 @@ window* setup_osg(window* win) {
         if (interface->scenes.size() > 0) {
             auto* scene = interface->scenes[interface->scene_in_use];
             if (scene->main_camera) {
-                setup_camera(scene->main_camera, view);  // Pass the view, not the interface's viewer
+                setup_camera(scene->main_camera, interface->view);  // Pass the view, not the interface's viewer
             }
         }
 
-        win->viewer->addView(view);
-        interface->view = view;
+        // Initialize the render system
+        xgn::RenderSystem::instance().initialize(interface->view);
+
+        // Set the desired render engine with settings
+        EngineSettings settings;
+        settings.set("directpass.invert.enabled", true);
+        settings.set("directpass.invert.intensity", 1.0f);
+
+        xgn::RenderSystem::instance().set_render_engine("DirectPass", settings);
+
+        // Ensure the invert pass is properly configured
+        if (auto* engine = xgn::RenderSystem::instance().get_current_engine()) {
+            engine->toggle_pass("InvertPass", true);
+        }
+
+        win->viewer->addView(interface->view);
     }
 
     xgnUI::init_keyboard(win->interfaces[0]->view);

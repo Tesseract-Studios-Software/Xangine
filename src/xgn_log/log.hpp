@@ -73,7 +73,7 @@ int log(const string& code, const int& level, const string& extra_info = "") {
     if (log_codes.count(code)) {
         cout << log_codes[code] << " ";
     } else {
-        cout << "Unknown code ";
+        cout << " ";
     }
     cout << extra_info << endl;
     return 0;

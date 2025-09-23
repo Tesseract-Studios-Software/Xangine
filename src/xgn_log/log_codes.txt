@@ -40,6 +40,11 @@ Copyright (c) 2025 Tesseract Studios
 0x9007 Invalid window or viewer in render_frame.
 0x9008 No valid graphics context.
 0x9009 Rendering failed:
+0x9014 Shader file is empty:
+0x9015 Shader compilation failed for:
+0x9016 Embedded vertex shader compilation failed:
+0x9017 Embedded fragment shader compilation failed:
+0x9018 Shader program linking failed:
 
 # 4 - CRITICAL 0xb000-0xcfff
 
