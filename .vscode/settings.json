@@ -227,7 +227,16 @@
         "iomanip": "cpp",
         "scissor": "cpp",
         "window": "cpp",
-        "texture2d": "cpp"
+        "texture2d": "cpp",
+        "clipnode": "cpp",
+        "clipplane": "cpp",
+        "depth": "cpp",
+        "endian": "cpp",
+        "kdtree": "cpp",
+        "matrixtemplate": "cpp",
+        "matrixtransform": "cpp",
+        "textureattribute": "cpp",
+        "uniformbase": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
