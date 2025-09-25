@@ -5,7 +5,8 @@ Xangine is a game engine devlepoed by Tesseract Studios.
 ## Disclaimer
 **'Tesseract Studios'** refers to the team maintaining this project.  
 This is **not affiliated with** any other entity using a similar name.  
-(For avoidance of doubt, see [Website] https://sites.google.com/view/tesseract-studios/ and [GitHub] https://github.com/Tesseract-Studios-Software/)  
+For avoidance of doubt, see:  
+https://sites.google.com/view/tesseract-studios/   https://github.com/Tesseract-Studios-Software/  
 Xangine License: `/LICENSE.txt`  
 OpenSceneGraph License: `/OSG-LICENSE.txt`  
 
