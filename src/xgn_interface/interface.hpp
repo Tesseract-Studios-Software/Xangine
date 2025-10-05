@@ -20,6 +20,14 @@ struct interface {
     int size_y = 100; // Y-axis length of the interface.
     string interface_type = "3D"; // 3D / UI
     osg::ref_ptr<osgViewer::View> view;
+
+    // Mouse state
+    bool mouse_grabbed = false;
+    double mouse_x = 0;
+    double mouse_y = 0;
+    double mouse_delta_x = 0;
+    double mouse_delta_y = 0;
+    bool mouse_buttons[5] = {false}; // Left, Middle, Right, etc.
 };
 
 };
