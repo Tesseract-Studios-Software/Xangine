@@ -1,3 +1,2 @@
-MacOS: clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -I./src -I[python_location] -l[python_location] -I./OpenSceneGraph/include -o [output] [input]
-       clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -I./src -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13
--l/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/lib/python3.13/config-3.13-darwin -ldl -framework CoreFoundation -I./OpenSceneGraph/include -o "./Tester/Xangine Tester" "./Tester/Xangine Tester.cpp"
+MacOS: clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -I./src -I./OpenSceneGraph/include [input] -o [output]
+clang++ -std=c++17 -Wl,-rpath,/usr/local/lib -losgViewer -losg -losgDB -losgUtil -lOpenThreads -losgGA -losgGA -I./src -I./OpenSceneGraph/include "./Tester/Xangine Tester.cpp" -o "./Tester/Xangine Tester" -w
