@@ -424,6 +424,9 @@ window* setup_osg(window* win) {
         if (auto* engine = xgn::RenderSystem::instance().get_current_engine()) {
             engine->toggle_pass("InvertPass", true);
         }
+        osg::ref_ptr<xgn::MouseHandler> mouseHandler = new xgn::MouseHandler(win);
+        interface->view->addEventHandler(mouseHandler.get());
+        interface->mouse_handler = mouseHandler;
 
         win->viewer->addView(interface->view);
     }

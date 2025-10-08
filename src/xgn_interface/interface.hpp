@@ -5,6 +5,7 @@
 #define INTERFACE_HPP
 
 #include <xgn3D_scene/scene.hpp>
+#include <xgnUI_key/mouse.hpp>
 #include <xgn_log/log.hpp>
 #include <osgViewer/Viewer>
 #include <vector>
@@ -28,6 +29,7 @@ struct interface {
     double mouse_delta_x = 0;
     double mouse_delta_y = 0;
     bool mouse_buttons[5] = {false}; // Left, Middle, Right, etc.
+    MouseHandler* mouse_handler;
 };
 
 };
