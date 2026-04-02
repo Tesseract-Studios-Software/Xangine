@@ -21,8 +21,7 @@ public:
     void pollEvents();
     void swapBuffers();
     
-    void* getNativeHandle() const;  // For GLFW/Vulkan
-    
+    void* getNativeHandle() const { return m_window; }
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
     
