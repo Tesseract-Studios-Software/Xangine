@@ -11,8 +11,56 @@
 
 # Windows
 Thumbs.db
-desktop.ini
+ehthumbs.db
+Desktop.ini
 
 # Linux
 .directory
 *~
+
+# Build artifacts
+build/
+Build/
+cmake-build-*/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# Compiled shaders
+*.spv
+*.cache
+
+# Asset cache
+Assets/Cache/
+.cache/
+
+# Logs
+*.log
+Logs/
+
+# User settings (if using editor)
+Editor/UserSettings/
+*.userprefs
+
+# Package managers
+vcpkg_installed/
+.vcpkg/
+
+# Testing
+Tests/Output/
+coverage/
+
+# Documentation temp files
+Docs/_build/
+Docs/api/
