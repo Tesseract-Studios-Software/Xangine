@@ -4,7 +4,7 @@ Xangine is a 3D graphics and simulation engine by Tesseract Studios.
 'Tesseract Studios' refers to the team maintaining this project.  
 This is not affiliated with any other entity using a similar name.  
 For avoidance of doubt, see:  
-`https://github.com/Tesseract-Studios-Software/ ` 
+`https://github.com/Tesseract-Studios-Software/`   
 Xangine License: `/LICENSE.txt`
 ##  
 ![Version](https://img.shields.io/badge/version-v0.1.0--pre--alpha-orange)  
