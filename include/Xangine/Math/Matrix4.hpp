@@ -2,6 +2,9 @@
 
 #include "Vector3.hpp"
 #include "Vector4.hpp"
+#include <iostream>
+
+using namespace std;
 
 namespace Xangine {
 
@@ -242,9 +245,9 @@ struct Matrix4 {
     void print() const {
         for (int row = 0; row < 4; ++row) {
             for (int col = 0; col < 4; ++col) {
-                std::cout << data[col * 4 + row] << " ";
+                cout << data[col * 4 + row] << " ";
             }
-            std::cout << std::endl;
+            cout << std::endl;
         }
     }
 };

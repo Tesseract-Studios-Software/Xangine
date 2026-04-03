@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Xangine/Platform/OpenGL.hpp>  // This now includes GLFW
+#include <Xangine/Platform/OpenGL.hpp>
+#include <Xangine/Platform/GLFW.hpp>
 #include <Xangine/Graphics/Renderer.hpp>
 #include <Xangine/Core/Window.hpp>
-#include <vector>  // For framebuffers
 
 namespace Xangine {
 
@@ -13,10 +13,11 @@ public:
     ~OpenGLRenderer() override;
     
     // Renderer interface
-    bool initialize(Window* window) override;
+    bool initialise(Window* window) override;
     void shutdown() override;
     void beginFrame() override;
     void endFrame() override;
+    void swapBuffers() override;
     void clear(float r, float g, float b, float a) override;
     void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera) override;
     void createVertexBuffer(const Mesh& mesh) override;
@@ -25,9 +26,9 @@ public:
 private:
     Window* m_window = nullptr;
     unsigned int m_shaderProgram = 0;
-    unsigned int m_vao = 0;  // Vertex Array Object
-    unsigned int m_vbo = 0;  // Vertex Buffer Object
-    unsigned int m_ebo = 0;  // Element Buffer Object
+    unsigned int m_vao = 0;
+    unsigned int m_vbo = 0;
+    unsigned int m_ebo = 0;
     
     void createShaders();
     void setupVertexAttributes();

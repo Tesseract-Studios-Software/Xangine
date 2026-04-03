@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <ostream>
+#include "Vector2.hpp"
 
 namespace Xangine {
 

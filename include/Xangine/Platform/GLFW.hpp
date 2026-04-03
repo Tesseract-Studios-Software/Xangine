@@ -3,10 +3,11 @@
 #include "Platform.hpp"
 
 #ifdef XANGINE_PLATFORM_MACOS
-    #define GL_SILENCE_DEPRECATION
-    #include <OpenGL/gl3.h>
+    #include <GLFW/glfw3.h>
+    
 #elif defined(XANGINE_PLATFORM_WINDOWS)
-    #include <GL/glew.h>
+    #include <GLFW/glfw3.h>
+    
 #elif defined(XANGINE_PLATFORM_LINUX)
-    #include <GL/glew.h>
+    #include <GLFW/glfw3.h>
 #endif

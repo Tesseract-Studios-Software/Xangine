@@ -11,7 +11,7 @@ struct MathConstants {
     static constexpr T TWO_PI = T(2.0 * 3.14159265358979323846);
     static constexpr T HALF_PI = T(1.57079632679489661923);
     static constexpr T EPSILON = T(1e-6);
-    static constexpr T INFINITY = std::numeric_limits<T>::infinity();
+    static constexpr T INF = std::numeric_limits<T>::infinity();
     
     // Conversion helpers
     static constexpr T toRadians(T degrees) {

@@ -8,6 +8,7 @@
 *.swp
 *.swo
 *~
+Icon?
 
 # Windows
 Thumbs.db
@@ -64,4 +65,3 @@ coverage/
 # Documentation temp files
 Docs/_build/
 Docs/api/
-Icon?
