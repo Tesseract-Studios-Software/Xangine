@@ -23,6 +23,7 @@ Desktop.ini
 build/
 Build/
 cmake-build-*/
+CMakeFiles/
 *.o
 *.obj
 *.exe
