@@ -20,6 +20,7 @@ target_sources(Xangine PRIVATE
     src/Xangine/Core/Window.cpp
     src/Xangine/Core/Transform.cpp
     src/Xangine/Core/Mesh.cpp
+    src/Xangine/Graphics/Texture.cpp
     src/Xangine/Graphics/Backends/OpenGL/OpenGLRenderer.cpp
 )
 

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include "Vertex.hpp"
 #include "BoundingBox.hpp"
+#include <Xangine/Graphics/ShadingModel.hpp>
 
 namespace Xangine {
 
@@ -44,6 +45,22 @@ struct Mesh {
     // Check if mesh is valid
     bool isValid() const {
         return !vertices.empty() && !indices.empty();
+    }
+
+    enum class MeshType {
+        Primitive,   // Cube, plane, cylinder → Flat default
+        Organic,     // Sphere, character, terrain → Smooth default
+        Custom       // User decides
+    };
+    
+    MeshType type = MeshType::Primitive;
+    
+    ShadingModel getRecommendedShading() const {
+        switch (type) {
+            case MeshType::Primitive: return ShadingModel::Flat;
+            case MeshType::Organic:   return ShadingModel::Smooth;
+            case MeshType::Custom:    return ShadingModel::Auto;
+        }
     }
 };
 

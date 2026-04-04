@@ -58,40 +58,46 @@ Mesh Mesh::createCube(float size) {
     Mesh mesh;
     float half = size * 0.5f;
     
-    // 8 vertices
+    // 8 unique vertices
     mesh.vertices = {
-        {{-half, -half,  half}}, // 0
-        {{ half, -half,  half}}, // 1
-        {{ half, -half, -half}}, // 2
-        {{-half, -half, -half}}, // 3
-        {{-half,  half,  half}}, // 4
-        {{ half,  half,  half}}, // 5
-        {{ half,  half, -half}}, // 6
-        {{-half,  half, -half}}  // 7
+        {{-half, -half,  half}}, // 0 front bottom left
+        {{ half, -half,  half}}, // 1 front bottom right
+        {{ half, -half, -half}}, // 2 back bottom right
+        {{-half, -half, -half}}, // 3 back bottom left
+        {{-half,  half,  half}}, // 4 front top left
+        {{ half,  half,  half}}, // 5 front top right
+        {{ half,  half, -half}}, // 6 back top right
+        {{-half,  half, -half}}  // 7 back top left
     };
     
     // 12 triangles (2 per face)
     mesh.indices = {
-        // Bottom face
-        0, 1, 2,
-        0, 2, 3,
-        // Top face
-        4, 6, 5,
-        4, 7, 6,
-        // Front face
-        0, 4, 5,
-        0, 5, 1,
-        // Back face
-        3, 2, 6,
-        3, 6, 7,
-        // Left face
-        0, 3, 7,
-        0, 7, 4,
-        // Right face
-        1, 5, 6,
-        1, 6, 2
+        // Bottom face (y = -half)
+        0, 2, 1,
+        0, 3, 2,
+        
+        // Top face (y = half)
+        4, 5, 6,
+        4, 6, 7,
+        
+        // Front face (z = half)
+        0, 1, 5,
+        0, 5, 4,
+        
+        // Back face (z = -half)
+        3, 6, 2,
+        3, 7, 6,
+        
+        // Left face (x = -half)
+        0, 4, 7,
+        0, 7, 3,
+        
+        // Right face (x = half)
+        1, 2, 6,
+        1, 6, 5
     };
     
+    // Add normals for lighting (optional but good)
     mesh.calculateNormals();
     mesh.calculateBounds();
     

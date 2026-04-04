@@ -5,6 +5,7 @@
 #include <Xangine/Graphics/RendererType.hpp>
 #include <Xangine/Core/Colour.hpp>
 #include <Xangine/Core/Window.hpp>
+#include <Xangine/Core/Viewport.hpp>
 #include <Xangine/Platform/GLFW.hpp> 
 #include <Xangine/Graphics/Renderer.hpp>
 
@@ -44,12 +45,19 @@ public:
     int getWidth() const { return m_width; }
     int getHeight() const { return m_height; }
     void* getNativeHandle() const { return m_window; }
+    void setResizeCallback(std::function<void(int, int)> callback);
+    void addViewport(Viewport* viewport);
+    void removeViewport(Viewport* viewport);
+    void renderViewports();
     
 private:
     void* m_window;  // GLFWwindow*
     int m_width, m_height;
     WindowConfig m_config;
     std::unique_ptr<Renderer> m_renderer;
+    std::function<void(int, int)> m_resizeCallback;
+    static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+    std::vector<Viewport*> m_viewports;
     
     bool createWindow();
     bool createRenderer();

@@ -116,6 +116,19 @@ bool Window::createRenderer() {
     return m_renderer != nullptr;
 }
 
+void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    Window* app = (Window*)glfwGetWindowUserPointer(window);
+    if (app && app->m_resizeCallback) {
+        app->m_resizeCallback(width, height);
+    }
+}
+
+void Window::setResizeCallback(std::function<void(int, int)> callback) {
+    m_resizeCallback = callback;
+    glfwSetFramebufferSizeCallback((GLFWwindow*)m_window, framebufferSizeCallback);
+}
+
 bool Window::shouldClose() const {
     return glfwWindowShouldClose((GLFWwindow*)m_window);
 }

@@ -24,6 +24,7 @@
 // Graphics
 #include <Xangine/Graphics/Renderer.hpp>
 #include <Xangine/Graphics/RendererType.hpp>
+#include <Xangine/Graphics/Texture.hpp>
 
 // Platform
 #include <Xangine/Platform/Platform.hpp>
