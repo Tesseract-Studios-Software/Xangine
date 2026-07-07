@@ -23,6 +23,7 @@ int main() {
     
     // Create a cube mesh
     Mesh cube = Mesh::createCube(1.0f);
+    cube.materials.push_back(Material::fromAlbedo(Vec3(1.0f, 0.0f, 0.0f), ShadingModel::Flat));
     cout << "Cube has " << cube.vertices.size() << " vertices and " 
             << cube.indices.size() << " indices" << std::endl;
     
@@ -37,7 +38,7 @@ int main() {
     // Cube transform
     Transform cubeTransform;
     float rotationSpeed = 0.01f;
-    float angle = 0.0f;
+    float angle = 45.0f;
     
     std::cout << "Spinning cube! Close window to exit." << std::endl;
     
@@ -51,7 +52,7 @@ int main() {
         window.clear(0.1f, 0.1f, 0.15f, 1.0f);
         
         // Draw cube
-        renderer->drawMesh(cube, cubeTransform, camera);
+        renderer->drawMesh(cube, cubeTransform, camera, cube.getMaterial(0));
         
         // Update window
         window.update();

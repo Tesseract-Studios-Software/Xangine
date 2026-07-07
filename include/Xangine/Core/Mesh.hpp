@@ -5,6 +5,7 @@
 #include "Vertex.hpp"
 #include "BoundingBox.hpp"
 #include <Xangine/Graphics/ShadingModel.hpp>
+#include <Xangine/Graphics/Material.hpp>
 
 namespace Xangine {
 
@@ -15,11 +16,14 @@ struct Mesh {
     
     // Optional: Sub-meshes for different materials
     struct SubMesh {
-        uint32_t startIndex;    // Where in the index buffer
-        uint32_t indexCount;    // How many indices
-        uint32_t materialId;    // Which material to use
+        uint32_t startIndex = 0;    // Where in the index buffer
+        uint32_t indexCount = 0;    // How many indices
+        uint32_t materialId = 0;    // Which material to use
     };
     std::vector<SubMesh> subMeshes;
+
+    // Materials available for the mesh and its sub-meshes
+    std::vector<Material> materials;
     
     // Bounding box for culling
     BoundingBox bounds;
@@ -61,6 +65,14 @@ struct Mesh {
             case MeshType::Organic:   return ShadingModel::Smooth;
             case MeshType::Custom:    return ShadingModel::Auto;
         }
+    }
+
+    const Material& getMaterial(uint32_t materialId) const {
+        if (materialId < materials.size()) {
+            return materials[materialId];
+        }
+        static const Material fallbackMaterial;
+        return fallbackMaterial;
     }
 };
 

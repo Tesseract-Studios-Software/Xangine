@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdint>
 
 namespace Xangine {
 
@@ -76,44 +77,59 @@ unsigned int OpenGLRenderer::getShaderForMaterial(const Material& material, cons
 }
 
 void OpenGLRenderer::drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera) {
-    // Default material
     Material defaultMaterial;
     drawMesh(mesh, transform, camera, defaultMaterial);
 }
 
 void OpenGLRenderer::drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material) {
+    if (mesh.subMeshes.empty()) {
+        drawMeshRange(mesh, transform, camera, material, 0, static_cast<uint32_t>(mesh.indices.size()));
+        return;
+    }
+
+    for (const auto& subMesh : mesh.subMeshes) {
+        const Material* subMaterial = &material;
+        if (subMesh.materialId < mesh.materials.size()) {
+            subMaterial = &mesh.materials[subMesh.materialId];
+        }
+
+        drawMeshRange(mesh, transform, camera, *subMaterial, subMesh.startIndex, subMesh.indexCount);
+    }
+}
+
+void OpenGLRenderer::drawMeshRange(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material, uint32_t indexOffset, uint32_t indexCount) {
     Mat4 model = transform.getLocalMatrix();
     Mat4 view = camera.getViewMatrix();
     Mat4 proj = camera.getProjectionMatrix();
     Mat4 mvp = proj * view * model;
-    
+
     unsigned int shaderProgram = getShaderForMaterial(material, mesh);
     glUseProgram(shaderProgram);
-    
+
     // Matrix uniforms
     int mvpLoc = glGetUniformLocation(shaderProgram, "uMVP");
     int modelLoc = glGetUniformLocation(shaderProgram, "uModel");
     if (mvpLoc != -1) glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &mvp.data[0]);
     if (modelLoc != -1) glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model.data[0]);
-    
+
     // Material uniforms
     int albedoLoc = glGetUniformLocation(shaderProgram, "uAlbedo");
     if (albedoLoc != -1) glUniform3f(albedoLoc, material.albedo.x, material.albedo.y, material.albedo.z);
-    
+
     // Lighting uniforms
     Vec3 lightPos(2.0f, 3.0f, 4.0f);
     Vec3 lightColor(1.0f, 1.0f, 1.0f);
-    
+
     int lightPosLoc = glGetUniformLocation(shaderProgram, "uLightPos");
     int lightColorLoc = glGetUniformLocation(shaderProgram, "uLightColor");
     int cameraPosLoc = glGetUniformLocation(shaderProgram, "uCameraPos");
-    
+
     if (lightPosLoc != -1) glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
     if (lightColorLoc != -1) glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
     if (cameraPosLoc != -1) glUniform3f(cameraPosLoc, camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
-    
+
     glBindVertexArray(m_vao);
-    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(static_cast<uintptr_t>(indexOffset * sizeof(uint32_t))));
 }
 
 void OpenGLRenderer::compileShader(unsigned int& program, const char* vertexSource, const char* fragmentSource) {

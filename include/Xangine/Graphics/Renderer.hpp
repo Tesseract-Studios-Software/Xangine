@@ -2,6 +2,7 @@
 
 #include <Xangine/Core/Mesh.hpp>
 #include <Xangine/Core/Camera.hpp>
+#include <Xangine/Graphics/Material.hpp>
 #include <Xangine/Math/Matrix4.hpp>
 
 namespace Xangine {
@@ -24,6 +25,7 @@ public:
     
     // Drawing
     virtual void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera) = 0;
+    virtual void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material) = 0;
     
     // Resources
     virtual void createVertexBuffer(const Mesh& mesh) = 0;

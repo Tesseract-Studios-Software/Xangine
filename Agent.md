@@ -1,0 +1,2 @@
+Formatting: CamelCase
+Spelling: British

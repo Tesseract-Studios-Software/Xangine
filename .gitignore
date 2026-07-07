@@ -66,3 +66,6 @@ coverage/
 # Documentation temp files
 Docs/_build/
 Docs/api/
+
+# User-side notes
+Notes.txt

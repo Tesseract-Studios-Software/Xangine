@@ -21,7 +21,7 @@ public:
     void swapBuffers() override;
     void clear(float r, float g, float b, float a) override;
     void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera) override;
-    void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material);
+    void drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material) override;
     void createVertexBuffer(const Mesh& mesh) override;
     void destroyVertexBuffer(Mesh& mesh) override;
     
@@ -43,7 +43,8 @@ private:
     void compileShaderWithGeometry(unsigned int& program, const char* vertexSource, const char* geometrySource, const char* fragmentSource);
     void setupVertexAttributes();
     
-    unsigned int OpenGLRenderer::getShaderForMaterial(const Material& material, const Mesh& mesh);
+    unsigned int getShaderForMaterial(const Material& material, const Mesh& mesh);
+    void drawMeshRange(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material, uint32_t indexOffset, uint32_t indexCount);
 };
 
 } // namespace Xangine
