@@ -34,6 +34,7 @@ int main() {
     // Setup camera
     Camera camera;
     camera.transform.position = Vec3(0.0f, 0.0f, 3.0f);
+    camera.transform.rotation = Quat::fromEuler(Vec3(0.0f, 0.0f, 0.0f));
     
     // Cube transform
     Transform cubeTransform;
