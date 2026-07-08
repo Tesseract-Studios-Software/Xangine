@@ -2,10 +2,12 @@
 
 #include <string>
 #include <memory>
+#include <functional>
 #include <Xangine/Graphics/RendererType.hpp>
 #include <Xangine/Core/Colour.hpp>
 #include <Xangine/Core/Window.hpp>
 #include <Xangine/Core/Viewport.hpp>
+#include <Xangine/Core/Input.hpp>
 #include <Xangine/Platform/GLFW.hpp> 
 #include <Xangine/Graphics/Renderer.hpp>
 
@@ -24,6 +26,8 @@ struct WindowConfig {
 
 class Window {
 public:
+    using KeyCallback = InputSystem::KeyCallback;
+
     Window(const WindowConfig& config = WindowConfig());
     ~Window();
     
@@ -35,6 +39,12 @@ public:
     bool shouldClose() const;
     void pollEvents();
     void update();  // Polls events + swaps buffers
+
+    // Keyboard input
+    void bindKey(Key key, KeyCallback callback, KeyAction action = KeyAction::Press);
+    bool isKeyDown(Key key) const;
+    bool isKeyPressed(Key key) const;
+    bool isKeyReleased(Key key) const;
     
     // Rendering helpers (forward to renderer)
     void clear(float r, float g, float b, float a);
@@ -57,7 +67,9 @@ private:
     std::unique_ptr<Renderer> m_renderer;
     std::function<void(int, int)> m_resizeCallback;
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     std::vector<Viewport*> m_viewports;
+    InputSystem m_input;
     
     bool createWindow();
     bool createRenderer();

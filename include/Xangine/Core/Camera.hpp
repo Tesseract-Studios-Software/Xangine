@@ -1,45 +1,44 @@
+// Core/Camera.hpp
 #pragma once
 
 #include <Xangine/Math/Matrix4.hpp>
 #include <Xangine/Math/Vector3.hpp>
 #include <Xangine/Math/Math.hpp>
-#include "Transform.hpp"
+#include <Xangine/Math/Transform.hpp>
 #include "BoundingBox.hpp"
 #include "Ray.hpp"
 
 namespace Xangine {
 
 enum class ProjectionType {
-    Perspective,   // 3D games (things get smaller in distance)
-    Orthographic    // 2D UI, strategy games
+    Perspective,
+    Orthographic
 };
 
 struct Camera {
-    // Transform (where camera is)
-    Transform transform;
+    TransformF transform;
     
     // Projection settings
     ProjectionType type = ProjectionType::Perspective;
-    float fov = 60.0f;              // Field of view (degrees)
+    float fov = 60.0f;
     float nearPlane = 0.1f;
     float farPlane = 1000.0f;
-    float orthoSize = 5.0f;         // For orthographic
+    float orthoSize = 5.0f;
     
-    // Viewport (which part of screen)
+    // Viewport
     int viewportX = 0;
     int viewportY = 0;
     int viewportWidth = 1920;
     int viewportHeight = 1080;
     
-    // Get view matrix (where camera is looking)
+    // Get view matrix using transform's position and rotation
     Mat4 getViewMatrix() const {
         Vec3 pos = transform.getWorldPosition();
-        Vec3 forward = transform.forward();
-        Vec3 up = transform.up();
+        Vec3 forward = transform.getForward();
+        Vec3 up = transform.getUp();
         return Mat4::lookAt(pos, pos + forward, up);
     }
     
-    // Get projection matrix (lens properties)
     Mat4 getProjectionMatrix() const {
         float aspect = (float)viewportWidth / (float)viewportHeight;
         
@@ -59,15 +58,35 @@ struct Camera {
         }
     }
     
-    // Combined matrix (most common for shaders)
     Mat4 getViewProjectionMatrix() const {
         return getProjectionMatrix() * getViewMatrix();
     }
     
-    // Check if a bounding box is visible (frustum culling)
+    // Convenience movement methods using transform
+    void moveForward(float distance) {
+        transform.moveForward(distance);
+    }
+    
+    void moveRight(float distance) {
+        transform.moveRight(distance);
+    }
+    
+    void moveUp(float distance) {
+        transform.moveUp(distance);
+    }
+    
+    void moveLocal(const Vec3& offset) {
+        transform.moveLocal(offset);
+    }
+    
+    void rotateLocal(const Vec3& eulerAngles) {
+        transform.rotateLocal(eulerAngles);
+    }
+    
+    // Frustum culling
     bool isBoxVisible(const BoundingBox& box) const;
     
-    // Convert screen coordinates to world ray (for picking)
+    // Screen ray for picking
     Ray getScreenRay(float screenX, float screenY) const;
 };
 

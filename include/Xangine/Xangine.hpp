@@ -3,12 +3,13 @@
 // Core
 #include <Xangine/Core/Version.hpp>
 #include <Xangine/Core/Window.hpp>
+#include <Xangine/Core/Scene.hpp>
 #include <Xangine/Core/Colour.hpp>
 #include <Xangine/Core/Mesh.hpp>
 #include <Xangine/Core/Camera.hpp>
-#include <Xangine/Core/Transform.hpp>
 #include <Xangine/Core/Vertex.hpp>
 #include <Xangine/Core/Version.hpp>
+#include <Xangine/Core/Input.hpp>
 
 // Data
 #include <Xangine/Data/VersionNumber.hpp>
@@ -19,6 +20,7 @@
 #include <Xangine/Math/Vector4.hpp>
 #include <Xangine/Math/Matrix4.hpp>
 #include <Xangine/Math/Quaternion.hpp>
+#include <Xangine/Math/Transform.hpp>
 #include <Xangine/Math/Math.hpp>
 
 // Graphics

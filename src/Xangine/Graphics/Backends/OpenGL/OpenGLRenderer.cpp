@@ -1,370 +1,203 @@
+// src/Xangine/Graphics/Backends/OpenGL/OpenGLRenderer.cpp
 #include "OpenGLRenderer.hpp"
+#include <Xangine/Core/Window.hpp>
+#include <Xangine/Platform/OpenGL.hpp>
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdint>
 
 namespace Xangine {
 
 OpenGLRenderer::OpenGLRenderer() = default;
-OpenGLRenderer::~OpenGLRenderer() = default;
+
+OpenGLRenderer::~OpenGLRenderer() {
+    shutdown();
+}
 
 bool OpenGLRenderer::initialise(Window* window) {
     m_window = window;
-    
-    GLFWwindow* glfwWindow = static_cast<GLFWwindow*>(window->getNativeHandle());
-    
-    glfwMakeContextCurrent(glfwWindow);
-    glfwSwapInterval(1);
-    
-    #ifdef XANGINE_PLATFORM_MACOS
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    #endif
-    
+
+    const char* vertexShader = R"(
+        #version 410 core
+        layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aNormal;
+        layout (location = 2) in vec2 aUV;
+
+        uniform mat4 uModel;
+        uniform mat4 uView;
+        uniform mat4 uProjection;
+
+        out vec3 FragNormal;
+        out vec3 FragPos;
+
+        void main() {
+            vec4 worldPos = uModel * vec4(aPos, 1.0);
+            FragPos = vec3(worldPos);
+            FragNormal = mat3(transpose(inverse(uModel))) * aNormal;
+            gl_Position = uProjection * uView * worldPos;
+        }
+    )";
+
+    const char* fragmentShader = R"(
+        #version 410 core
+        out vec4 FragColor;
+
+        in vec3 FragNormal;
+        in vec3 FragPos;
+
+        uniform vec3 uColor;
+        uniform vec3 uLightPos;
+        uniform vec3 uLightColor;
+        uniform vec3 uViewPos;
+        uniform int uShadingModel;
+
+        void main() {
+            vec3 normal;
+            if (uShadingModel == 0) {
+                normal = normalize(FragNormal);
+            } else {
+                normal = normalize(cross(dFdx(FragPos), dFdy(FragPos)));
+            }
+            
+            vec3 lightDir = normalize(uLightPos - FragPos);
+            float diff = max(dot(normal, lightDir), 0.0);
+            vec3 diffuse = diff * uLightColor;
+            
+            vec3 viewDir = normalize(uViewPos - FragPos);
+            vec3 reflectDir = reflect(-lightDir, normal);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+            vec3 specular = spec * uLightColor;
+            
+            float ambientStrength = 0.1;
+            vec3 ambient = ambientStrength * uLightColor;
+            
+            vec3 result = (ambient + diffuse + specular) * uColor;
+            FragColor = vec4(result, 1.0);
+        }
+    )";
+
+    m_shaderInitialised = m_shader.loadFromSource(vertexShader, fragmentShader);
+    if (!m_shaderInitialised) {
+        std::cerr << "Failed to load shader!" << std::endl;
+        return false;
+    }
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    
-    createSmoothShadingShader();
-    createFlatShadingShader();
-    
+
     return true;
 }
 
 void OpenGLRenderer::shutdown() {
-    if (m_smoothShadingProgram) glDeleteProgram(m_smoothShadingProgram);
-    if (m_flatShadingProgram) glDeleteProgram(m_flatShadingProgram);
-    if (m_vao) glDeleteVertexArrays(1, &m_vao);
-    if (m_vbo) glDeleteBuffers(1, &m_vbo);
-    if (m_ebo) glDeleteBuffers(1, &m_ebo);
+    for (auto& pair : m_buffers) {
+        if (pair.second.vao) glDeleteVertexArrays(1, &pair.second.vao);
+        if (pair.second.vbo) glDeleteBuffers(1, &pair.second.vbo);
+        if (pair.second.ebo) glDeleteBuffers(1, &pair.second.ebo);
+    }
+    m_buffers.clear();
 }
 
 void OpenGLRenderer::beginFrame() {}
-void OpenGLRenderer::endFrame() {}
 
-void OpenGLRenderer::swapBuffers() {
-    GLFWwindow* glfwWindow = static_cast<GLFWwindow*>(m_window->getNativeHandle());
-    glfwSwapBuffers(glfwWindow);
-}
+void OpenGLRenderer::endFrame() {}
 
 void OpenGLRenderer::clear(float r, float g, float b, float a) {
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-unsigned int OpenGLRenderer::getShaderForMaterial(const Material& material, const Mesh& mesh) {
-    switch (material.shading) {
-        case ShadingModel::Flat:
-            return m_flatShadingProgram;
-        case ShadingModel::Smooth:
-            return m_smoothShadingProgram;
-        case ShadingModel::Auto:
-        default:
-            // Check if mesh has custom normals (not the default generated ones)
-            // For now, a simple heuristic: if normals are all zero, use Flat
-            bool hasNormals = false;
-            for (const auto& vertex : mesh.vertices) {
-                if (vertex.normal.lengthSquared() > 0.001f) {
-                    hasNormals = true;
-                    break;
-                }
-            }
-            return hasNormals ? m_smoothShadingProgram : m_flatShadingProgram;
+void OpenGLRenderer::swapBuffers() {
+    if (m_window) {
+        glfwSwapBuffers(static_cast<GLFWwindow*>(m_window->getNativeHandle()));
     }
-}
-
-void OpenGLRenderer::drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera) {
-    Material defaultMaterial;
-    drawMesh(mesh, transform, camera, defaultMaterial);
-}
-
-void OpenGLRenderer::drawMesh(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material) {
-    if (mesh.subMeshes.empty()) {
-        drawMeshRange(mesh, transform, camera, material, 0, static_cast<uint32_t>(mesh.indices.size()));
-        return;
-    }
-
-    for (const auto& subMesh : mesh.subMeshes) {
-        const Material* subMaterial = &material;
-        if (subMesh.materialId < mesh.materials.size()) {
-            subMaterial = &mesh.materials[subMesh.materialId];
-        }
-
-        drawMeshRange(mesh, transform, camera, *subMaterial, subMesh.startIndex, subMesh.indexCount);
-    }
-}
-
-void OpenGLRenderer::drawMeshRange(const Mesh& mesh, const Transform& transform, const Camera& camera, const Material& material, uint32_t indexOffset, uint32_t indexCount) {
-    Mat4 model = transform.getLocalMatrix();
-    Mat4 view = camera.getViewMatrix();
-    Mat4 proj = camera.getProjectionMatrix();
-    Mat4 mvp = proj * view * model;
-
-    unsigned int shaderProgram = getShaderForMaterial(material, mesh);
-    glUseProgram(shaderProgram);
-
-    // Matrix uniforms
-    int mvpLoc = glGetUniformLocation(shaderProgram, "uMVP");
-    int modelLoc = glGetUniformLocation(shaderProgram, "uModel");
-    if (mvpLoc != -1) glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, &mvp.data[0]);
-    if (modelLoc != -1) glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model.data[0]);
-
-    // Material uniforms
-    int albedoLoc = glGetUniformLocation(shaderProgram, "uAlbedo");
-    if (albedoLoc != -1) glUniform3f(albedoLoc, material.albedo.x, material.albedo.y, material.albedo.z);
-
-    // Lighting uniforms
-    Vec3 lightPos(2.0f, 3.0f, 4.0f);
-    Vec3 lightColor(1.0f, 1.0f, 1.0f);
-
-    int lightPosLoc = glGetUniformLocation(shaderProgram, "uLightPos");
-    int lightColorLoc = glGetUniformLocation(shaderProgram, "uLightColor");
-    int cameraPosLoc = glGetUniformLocation(shaderProgram, "uCameraPos");
-
-    if (lightPosLoc != -1) glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
-    if (lightColorLoc != -1) glUniform3f(lightColorLoc, lightColor.x, lightColor.y, lightColor.z);
-    if (cameraPosLoc != -1) glUniform3f(cameraPosLoc, camera.transform.position.x, camera.transform.position.y, camera.transform.position.z);
-
-    glBindVertexArray(m_vao);
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(static_cast<uintptr_t>(indexOffset * sizeof(uint32_t))));
-}
-
-void OpenGLRenderer::compileShader(unsigned int& program, const char* vertexSource, const char* fragmentSource) {
-    // Vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-    glCompileShader(vertexShader);
-    
-    // Check vertex shader compilation
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cerr << "Vertex shader compilation failed:\n" << infoLog << std::endl;
-    }
-    
-    // Fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-    glCompileShader(fragmentShader);
-    
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-        std::cerr << "Fragment shader compilation failed:\n" << infoLog << std::endl;
-    }
-    
-    // Link program
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(program, 512, nullptr, infoLog);
-        std::cerr << "Shader linking failed:\n" << infoLog << std::endl;
-    }
-    
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-}
-
-void OpenGLRenderer::compileShaderWithGeometry(unsigned int& program, const char* vertexSource, const char* geometrySource, const char* fragmentSource) {
-    // Vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, nullptr);
-    glCompileShader(vertexShader);
-    
-    // Geometry shader
-    unsigned int geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
-    glShaderSource(geometryShader, 1, &geometrySource, nullptr);
-    glCompileShader(geometryShader);
-    
-    // Fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, nullptr);
-    glCompileShader(fragmentShader);
-    
-    // Link program
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, geometryShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    
-    int success;
-    char infoLog[512];
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(program, 512, nullptr, infoLog);
-        std::cerr << "Geometry shader linking failed:\n" << infoLog << std::endl;
-    }
-    
-    glDeleteShader(vertexShader);
-    glDeleteShader(geometryShader);
-    glDeleteShader(fragmentShader);
-}
-
-void OpenGLRenderer::createSmoothShadingShader() {
-    const char* vertexSource = R"(
-        #version 330 core
-        layout(location = 0) in vec3 aPos;
-        layout(location = 1) in vec3 aNormal;
-        uniform mat4 uMVP;
-        uniform mat4 uModel;
-        out vec3 vNormal;
-        out vec3 vWorldPos;
-        
-        void main() {
-            gl_Position = uMVP * vec4(aPos, 1.0);
-            vNormal = mat3(transpose(inverse(uModel))) * aNormal;
-            vWorldPos = (uModel * vec4(aPos, 1.0)).xyz;
-        }
-    )";
-    
-    const char* fragmentSource = R"(
-        #version 330 core
-        in vec3 vNormal;
-        in vec3 vWorldPos;
-        out vec4 FragColor;
-        uniform vec3 uLightPos;
-        uniform vec3 uLightColor;
-        uniform vec3 uCameraPos;
-        uniform vec3 uAlbedo;
-        
-        void main() {
-            vec3 normal = normalize(vNormal);
-            vec3 lightDir = normalize(uLightPos - vWorldPos);
-            vec3 viewDir = normalize(uCameraPos - vWorldPos);
-            
-            float diff = max(dot(normal, lightDir), 0.0);
-            vec3 diffuse = diff * uLightColor;
-            
-            vec3 reflectDir = reflect(-lightDir, normal);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-            vec3 specular = spec * uLightColor;
-            
-            vec3 ambient = 0.3 * uLightColor;
-            vec3 result = (ambient + diffuse + specular) * uAlbedo;
-            FragColor = vec4(result, 1.0);
-        }
-    )";
-    
-    compileShader(m_smoothShadingProgram, vertexSource, fragmentSource);
-    std::cout << "Smooth shading shader compiled" << std::endl;
-}
-
-void OpenGLRenderer::createFlatShadingShader() {
-    const char* vertexSource = R"(
-        #version 330 core
-        layout(location = 0) in vec3 aPos;
-        uniform mat4 uMVP;
-        uniform mat4 uModel;
-        out vec3 vWorldPos;
-        
-        void main() {
-            vWorldPos = (uModel * vec4(aPos, 1.0)).xyz;
-            gl_Position = uMVP * vec4(aPos, 1.0);
-        }
-    )";
-    
-    const char* geometrySource = R"(
-        #version 330 core
-        layout(triangles) in;
-        layout(triangle_strip, max_vertices = 3) out;
-        uniform mat4 uModel;
-        in vec3 vWorldPos[];
-        out vec3 gNormal;
-        out vec3 gWorldPos;
-        
-        void main() {
-            vec3 a = vWorldPos[1] - vWorldPos[0];
-            vec3 b = vWorldPos[2] - vWorldPos[0];
-            gNormal = normalize(cross(a, b));
-            
-            for (int i = 0; i < 3; i++) {
-                gWorldPos = vWorldPos[i];
-                gl_Position = gl_in[i].gl_Position;
-                EmitVertex();
-            }
-            EndPrimitive();
-        }
-    )";
-    
-    const char* fragmentSource = R"(
-        #version 330 core
-        in vec3 gNormal;
-        in vec3 gWorldPos;
-        out vec4 FragColor;
-        uniform vec3 uLightPos;
-        uniform vec3 uLightColor;
-        uniform vec3 uCameraPos;
-        uniform vec3 uAlbedo;
-        
-        void main() {
-            vec3 normal = normalize(gNormal);
-            vec3 lightDir = normalize(uLightPos - gWorldPos);
-            vec3 viewDir = normalize(uCameraPos - gWorldPos);
-            
-            float diff = max(dot(normal, lightDir), 0.0);
-            vec3 diffuse = diff * uLightColor;
-            
-            vec3 reflectDir = reflect(-lightDir, normal);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-            vec3 specular = spec * uLightColor;
-            
-            vec3 ambient = 0.3 * uLightColor;
-            vec3 result = (ambient + diffuse + specular) * uAlbedo;
-            FragColor = vec4(result, 1.0);
-        }
-    )";
-    
-    compileShaderWithGeometry(m_flatShadingProgram, vertexSource, geometrySource, fragmentSource);
-    std::cout << "Flat shading shader (with geometry shader) compiled" << std::endl;
 }
 
 void OpenGLRenderer::createVertexBuffer(const Mesh& mesh) {
-    glGenVertexArrays(1, &m_vao);
-    glGenBuffers(1, &m_vbo);
-    glGenBuffers(1, &m_ebo);
-    
-    glBindVertexArray(m_vao);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    if (m_buffers.find(&mesh) != m_buffers.end()) {
+        return;
+    }
+
+    GLBuffer buffer;
+    glGenVertexArrays(1, &buffer.vao);
+    glGenBuffers(1, &buffer.vbo);
+    glGenBuffers(1, &buffer.ebo);
+
+    glBindVertexArray(buffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
     glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
-    
-    setupVertexAttributes();
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
+    glEnableVertexAttribArray(2);
+
+    buffer.indexCount = mesh.indices.size();
+    m_buffers[&mesh] = buffer;
 }
 
 void OpenGLRenderer::destroyVertexBuffer(Mesh& mesh) {
-    if (m_vao) glDeleteVertexArrays(1, &m_vao);
-    if (m_vbo) glDeleteBuffers(1, &m_vbo);
-    if (m_ebo) glDeleteBuffers(1, &m_ebo);
-    m_vao = m_vbo = m_ebo = 0;
+    auto it = m_buffers.find(&mesh);
+    if (it != m_buffers.end()) {
+        if (it->second.vao) glDeleteVertexArrays(1, &it->second.vao);
+        if (it->second.vbo) glDeleteBuffers(1, &it->second.vbo);
+        if (it->second.ebo) glDeleteBuffers(1, &it->second.ebo);
+        m_buffers.erase(it);
+    }
 }
 
-void OpenGLRenderer::setupVertexAttributes() {
-    glBindVertexArray(m_vao);
-    
-    // Position (location 0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    // Normal (location 1) - used by smooth shader, ignored by flat shader
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    glEnableVertexAttribArray(1);
-    
-    // UV (location 2)
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-    glEnableVertexAttribArray(2);
+void OpenGLRenderer::drawMesh(const Mesh& mesh, const TransformF& transform, const Camera& camera) {
+    const Material& material = mesh.getDefaultMaterial();
+    drawMeshInternal(mesh, transform, camera, material);
+}
+
+void OpenGLRenderer::drawMesh(const Mesh& mesh, const TransformF& transform, const Camera& camera, const Material& material) {
+    drawMeshInternal(mesh, transform, camera, material);
+}
+
+void OpenGLRenderer::drawMeshInternal(const Mesh& mesh, const TransformF& transform, const Camera& camera, const Material& material) {
+    if (!m_shaderInitialised) return;
+
+    auto it = m_buffers.find(&mesh);
+    if (it == m_buffers.end()) return;
+
+    const GLBuffer& buffer = it->second;
+
+    Mat4 modelMatrix = transform.getWorldMatrix();
+    Mat4 viewMatrix = camera.getViewMatrix();
+    Mat4 projectionMatrix = camera.getProjectionMatrix();
+
+    Vec3 lightPos(5.0f, 10.0f, 5.0f);
+    Vec3 lightColor(1.0f, 1.0f, 1.0f);
+    Vec3 viewPos = camera.transform.getWorldPosition();
+
+    int shadingModel = 0;
+    if (material.shading == ShadingModel::Flat) {
+        shadingModel = 1;
+    } else if (material.shading == ShadingModel::Smooth) {
+        shadingModel = 0;
+    } else if (material.shading == ShadingModel::Auto) {
+        shadingModel = (mesh.type == Mesh::MeshType::Primitive) ? 1 : 0;
+    }
+
+    m_shader.bind();
+    m_shader.setMat4("uModel", modelMatrix.data);
+    m_shader.setMat4("uView", viewMatrix.data);
+    m_shader.setMat4("uProjection", projectionMatrix.data);
+    m_shader.setVec3("uColor", material.albedo.x, material.albedo.y, material.albedo.z);
+    m_shader.setVec3("uLightPos", lightPos.x, lightPos.y, lightPos.z);
+    m_shader.setVec3("uLightColor", lightColor.x, lightColor.y, lightColor.z);
+    m_shader.setVec3("uViewPos", viewPos.x, viewPos.y, viewPos.z);
+    m_shader.setInt("uShadingModel", shadingModel);
+
+    glBindVertexArray(buffer.vao);
+    glDrawElements(GL_TRIANGLES, buffer.indexCount, GL_UNSIGNED_INT, nullptr);
 }
 
 } // namespace Xangine

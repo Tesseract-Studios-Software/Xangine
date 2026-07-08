@@ -8,14 +8,10 @@ For avoidance of doubt, see:
 Xangine License: `/LICENSE.txt`
 ##  
 ![Xangine](https://img.shields.io/badge/Tesseract--Studios-Xangine-darkblue)
-![Version](https://img.shields.io/badge/version-v0.1.0--pre--alpha-green)  
+![Version](https://img.shields.io/badge/version-v0.4.0--pre--alpha-green)  
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-blue)
 ![Graphics](https://img.shields.io/badge/graphics-OpenGL-blue)  
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
-
-![Docs](https://img.shields.io/badge/docs-work_in_progress-yellow)
-![Tutorials](https://img.shields.io/badge/tutorials-coming_soon-red)  
-![Status](https://img.shields.io/badge/status-pre--alpha-yellow) 
 
 ![Code Size](https://img.shields.io/github/languages/code-size/Tesseract-Studios-Software/Xangine)
 ![GitHub issues](https://img.shields.io/github/issues/Tesseract-Studios-Software/Xangine)

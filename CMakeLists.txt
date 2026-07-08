@@ -18,8 +18,11 @@ add_library(Xangine STATIC)
 
 target_sources(Xangine PRIVATE
     src/Xangine/Core/Window.cpp
-    src/Xangine/Core/Transform.cpp
+    src/Xangine/Core/Input.cpp
     src/Xangine/Core/Mesh.cpp
+    src/Xangine/Core/Scene.cpp
+    src/Xangine/Core/Shader.cpp
+    src/Xangine/Core/Object.cpp
     src/Xangine/Graphics/Texture.cpp
     src/Xangine/Graphics/Backends/OpenGL/OpenGLRenderer.cpp
 )
