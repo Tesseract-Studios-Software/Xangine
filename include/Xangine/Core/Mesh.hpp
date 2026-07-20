@@ -26,7 +26,7 @@ struct Mesh {
     BoundingBox bounds;
     
     static Mesh createCube(float size = 1.0f);
-    static Mesh createSphere(float radius = 1.0f, int segments = 32);
+    static Mesh createUVSphere(float radius = 1.0f, int rings = 32, int sectors = 32);
     static Mesh createPlane(float width = 1.0f, float depth = 1.0f);
     
     void calculateNormals();

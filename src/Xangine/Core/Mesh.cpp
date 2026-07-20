@@ -104,11 +104,62 @@ Mesh Mesh::createCube(float size) {
     return mesh;
 }
 
-Mesh Mesh::createSphere(float radius, int segments) {
+Mesh Mesh::createUVSphere(float radius, int rings, int sectors) {
     Mesh mesh;
-    // Simplified sphere - you can expand this later
-    // For now, just return a cube as placeholder
-    return createCube(radius * 2.0f);
+    
+    if (rings < 3) rings = 3;
+    if (sectors < 3) sectors = 3;
+    
+    // Generate vertices
+    for (int i = 0; i <= rings; i++) {
+        float theta = i * Math::PI / rings;
+        float sinTheta = std::sin(theta);
+        float cosTheta = std::cos(theta);
+        
+        for (int j = 0; j <= sectors; j++) {
+            float phi = j * 2.0f * Math::PI / sectors;
+            float sinPhi = std::sin(phi);
+            float cosPhi = std::cos(phi);
+            
+            Vec3 position(
+                radius * sinTheta * cosPhi,
+                radius * cosTheta,
+                radius * sinTheta * sinPhi
+            );
+            
+            Vec3 normal = position.normalized();
+            
+            Vec2 uv(
+                (float)j / sectors,
+                (float)i / rings
+            );
+            
+            mesh.vertices.push_back({position, normal, uv});
+        }
+    }
+    
+    // Generate indices
+    for (int i = 0; i < rings; i++) {
+        for (int j = 0; j < sectors; j++) {
+            int current = i * (sectors + 1) + j;
+            int next = current + sectors + 1;
+            
+            // First triangle
+            mesh.indices.push_back(current);
+            mesh.indices.push_back(next);
+            mesh.indices.push_back(current + 1);
+            
+            // Second triangle
+            mesh.indices.push_back(current + 1);
+            mesh.indices.push_back(next);
+            mesh.indices.push_back(next + 1);
+        }
+    }
+    
+    mesh.calculateBounds();
+    mesh.type = MeshType::Organic;
+    
+    return mesh;
 }
 
 Mesh Mesh::createPlane(float width, float depth) {
